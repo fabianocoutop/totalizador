@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Totalizador de Horas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #818cf8;
+      --primary-bg: #eef2ff;
+      --accent: #06b6d4;
+      --danger: #ef4444;
+      --success: #10b981;
+      --surface: #ffffff;
+      --bg: #f1f5f9;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ========== HEADER ========== */
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 28px 0 20px;
+      text-align: center;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
+    }
+
+    .app-header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .app-header p {
+      margin: 4px 0 0;
+      opacity: 0.85;
+      font-size: 0.9rem;
+    }
+
+    /* ========== CARDS ========== */
+    .card-custom {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: box-shadow 0.2s;
+    }
+
+    .card-custom:hover {
+      box-shadow: 0 6px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title i {
+      font-size: 1.2rem;
+    }
+
+    /* ========== FORM FIELDS ========== */
+    .form-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-control,
+    .form-select {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    /* ========== INTERVALOS ========== */
+    .intervalo {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--primary-bg);
+      border: 1px solid rgba(79, 70, 229, 0.1);
+      transition: background 0.15s;
+    }
+
+    .intervalo:hover {
+      background: #e0e7ff;
+    }
+
+    .intervalo .form-label {
+      margin-bottom: 2px;
+      font-size: 0.75rem;
+    }
+
+    .intervalo .form-control {
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .intervalo .parcial-badge {
+      font-size: 0.78rem;
+      color: var(--primary);
+      font-weight: 600;
+      white-space: nowrap;
+      min-width: 48px;
+      text-align: center;
+    }
+
+    /* ========== TOTAL BADGE ========== */
+    .total-display {
+      text-align: center;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      border-radius: 12px;
+      color: #fff;
+    }
+
+    .total-display .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.85;
+    }
+
+    .total-display .value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    /* ========== BUTTONS ========== */
+    .btn-primary-custom {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-primary-custom:hover {
+      background: #4338ca;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline-custom {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn-outline-custom:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-danger-custom {
+      background: transparent;
+      color: var(--danger);
+      border: 2px solid var(--danger);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn-danger-custom:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm-icon {
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sm-icon.remove {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .btn-sm-icon.remove:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm-icon.add {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .btn-sm-icon.add:hover {
+      background: var(--success);
+      color: #fff;
+    }
+
+    /* ========== HISTORY ========== */
+    .history-panel {
+      display: none;
+    }
+
+    .history-panel.active {
+      display: block;
+    }
+
+    .form-panel.hidden {
+      display: none;
+    }
+
+    .history-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .history-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary-light);
+    }
+
+    .history-card .project-name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--primary);
+    }
+
+    .history-card .desc-text {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin: 6px 0;
+    }
+
+    .history-card .intervals-list {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .history-card .intervals-list span {
+      margin-right: 12px;
+    }
+
+    .history-card .total-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .history-card .actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .history-card .actions button {
+      font-size: 0.8rem;
+      padding: 5px 12px;
+    }
+
+    .date-group-header {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 6px 0 8px;
+      margin-top: 12px;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-group-header i {
+      color: var(--primary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      display: block;
+      opacity: 0.4;
+    }
+
+    /* ========== NAV TABS ========== */
+    .nav-tabs-custom {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      background: var(--primary-bg);
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .nav-tabs-custom button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .nav-tabs-custom button.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .nav-tabs-custom button:hover:not(.active) {
+      color: var(--primary);
+    }
+
+    /* ========== FILTERS ========== */
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filters-row .form-control {
+      flex: 1;
+      min-width: 140px;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+    }
+
+    /* ========== TOAST ========== */
+    .toast-custom {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+
+    .toast-custom.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ========== EXPORT/IMPORT ========== */
+    .data-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .btn-export {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-export:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-import {
+      background: transparent;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-import:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-folder {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-folder:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+
+    .autosave-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .autosave-status.active {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .autosave-status.inactive {
+      background: rgba(245, 158, 11, 0.1);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .autosave-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .autosave-status.active .dot {
+      background: var(--success);
+    }
+
+    .autosave-status.inactive .dot {
+      background: #d97706;
+    }
+
+    .btn-reativar {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 5px 14px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .btn-reativar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+    }
+
+    .reativar-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .reativar-banner.show {
+      display: flex;
+    }
+
+    .reativar-banner i {
+      font-size: 1.2rem;
+      color: #d97706;
+    }
+
+    /* ========== APONTADO TOGGLE ========== */
+    .apontado-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .apontado-toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .apontado-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .apontado-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #cbd5e1;
+      border-radius: 22px;
+      transition: background 0.25s;
+    }
+
+    .apontado-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.25s;
+    }
+
+    .apontado-toggle input:checked+.apontado-slider {
+      background: var(--success);
+    }
+
+    .apontado-toggle input:checked+.apontado-slider::before {
+      transform: translateX(18px);
+    }
+
+    .apontado-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s;
+    }
+
+    .apontado-label.checked {
+      color: var(--success);
+    }
+
+    .history-card.apontado {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.04);
+    }
+
+    .history-card.apontado:hover {
+      border-color: rgba(16, 185, 129, 0.6);
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 576px) {
+      .intervalo {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .intervalo>div {
+        flex: 1;
+        min-width: 80px;
+      }
+
+      .total-display .value {
+        font-size: 1.8rem;
+      }
+
+      .filters-row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <h1><i class="bi bi-clock-history"></i> Totalizador de Horas</h1>
+    <p>Registre e gerencie o tempo dedicado aos seus projetos</p>
+  </div>
+
+  <div class="container" style="max-width: 680px;">
+
+    <!-- NAV TABS -->
+    <div class="nav-tabs-custom">
+      <button id="tab-form" class="active" onclick="showTab('form')">
+        <i class="bi bi-plus-circle"></i> Novo Registro
+      </button>
+      <button id="tab-history" onclick="showTab('history')">
+        <i class="bi bi-clock-history"></i> Histórico
+      </button>
+    </div>
+
+    <!-- ==================== FORM PANEL ==================== -->
+    <div id="form-panel" class="form-panel">
+
+      <!-- Banner de reativação (aparece quando a permissão expirou) -->
+      <div class="reativar-banner" id="reativar-banner">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span id="reativar-banner-text">Auto-save precisa ser reativado</span>
+        <button class="btn-reativar" onclick="reativarPermissao()">
+          <i class="bi bi-unlock"></i> Reativar
+        </button>
+      </div>
+
+      <!-- Projeto + Data -->
+      <div class="card-custom">
+        <div class="section-title"><i class="bi bi-briefcase"></i> Informações do Registro</div>
+        <div class="row g-3">
+          <div class="col-sm-8">
+            <label class="form-label" for="campo-projeto">Projeto / Empresa</label>
+            <input type="text" id="campo-projeto" class="form-control" placeholder="Ex: Empresa XYZ" autocomplete="off">
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label" for="campo-data">Data</label>
+            <input type="date" id="campo-data" class="form-control">
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label" for="campo-ticket">Ticket <small
+                style="opacity:0.5;text-transform:none;">(opcional)</small></label>
+            <input type="text" id="campo-ticket" class="form-control" placeholder="Ex: #12345" autocomplete="off">
+          </div>
+          <div class="col-sm-8">
+            <label class="form-label" for="campo-descricao">Descrição do Trabalho</label>
+            <textarea id="campo-descricao" class="form-control" placeholder="Descreva o que foi feito..."
+              rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intervalos -->
+      <div class="card-custom">
+        <div class="section-title"><i class="bi bi-stopwatch"></i> Intervalos de Tempo</div>
+        <div id="intervalos"></div>
+        <button class="btn-sm-icon add" onclick="adicionarIntervalo()" title="Adicionar intervalo"
+          style="margin-top:4px;">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
+
+      <!-- Total -->
+      <div class="total-display mb-3">
+        <div class="label">Total de Horas</div>
+        <div class="value" id="total">00:00</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex gap-2 mb-4 flex-wrap">
+        <button class="btn-primary-custom flex-fill" onclick="salvarRegistro()">
+          <i class="bi bi-check-lg"></i> Salvar Registro
+        </button>
+        <button class="btn-outline-custom" onclick="resetFormulario()">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== HISTORY PANEL ==================== -->
+    <div id="history-panel" class="history-panel">
+      <div class="card-custom">
+        <div class="section-title"><i class="bi bi-funnel"></i> Filtros</div>
+        <div class="filters-row">
+          <input type="date" id="filtro-data-de" class="form-control" title="Data inicial">
+          <input type="date" id="filtro-data-ate" class="form-control" title="Data final">
+          <input type="text" id="filtro-projeto" class="form-control" placeholder="Buscar projeto..."
+            autocomplete="off">
+          <input type="text" id="filtro-ticket" class="form-control" placeholder="Buscar ticket..." autocomplete="off"
+            style="max-width:140px;">
+          <select id="filtro-status" class="form-select" style="max-width:160px;font-size:0.85rem;padding:8px 12px;">
+            <option value="todos">Todos</option>
+            <option value="nao">Não apontados</option>
+            <option value="sim">Apontados</option>
+          </select>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted" id="history-count"></small>
+          <button class="btn-danger-custom" onclick="limparFiltros()" style="padding:6px 14px;font-size:0.8rem;">
+            <i class="bi bi-x-lg"></i> Limpar Filtros
+          </button>
+        </div>
+        <div class="data-actions">
+          <button class="btn-folder" onclick="configurarPasta()">
+            <i class="bi bi-folder2-open"></i> Configurar Pasta
+          </button>
+          <button class="btn-export" onclick="exportarDados()">
+            <i class="bi bi-download"></i> Exportar JSON
+          </button>
+          <button class="btn-import" onclick="document.getElementById('importar-input').click()">
+            <i class="bi bi-upload"></i> Importar JSON
+          </button>
+        </div>
+        <div class="autosave-status inactive" id="autosave-status">
+          <span class="dot"></span>
+          <span id="autosave-text">Salvamento automático: não configurado</span>
+          <button class="btn-reativar" id="autosave-reativar-btn" style="display:none;" onclick="reativarPermissao()">
+            <i class="bi bi-unlock"></i> Reativar
+          </button>
+        </div>
+      </div>
+      <div id="history-list"></div>
+      <input type="file" id="importar-input" accept=".json" style="display:none;" onchange="importarDados(event)">
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-custom" id="toast"></div>
+
+  <script>
+    // =====================================================
+    // STATE
+    // =====================================================
+    let idContador = 0;
+    let editandoId = null; // ID do registro em edição (null = novo)
+    const STORAGE_KEY = 'timeTrackerRecords';
+    let dirHandle = null; // Handle da pasta para salvamento automático
+    let pendingHandle = null; // Handle salvo mas sem permissão ainda
+    const DB_NAME = 'timeTrackerDB';
+    const DB_STORE = 'config';
+
+    // =====================================================
+    // INIT
+    // =====================================================
+    window.onload = function () {
+      document.getElementById('campo-data').value = hoje();
+      adicionarIntervalo();
+      // Listeners para filtros no histórico
+      document.getElementById('filtro-data-de').addEventListener('change', renderHistorico);
+      document.getElementById('filtro-data-ate').addEventListener('change', renderHistorico);
+      document.getElementById('filtro-projeto').addEventListener('input', renderHistorico);
+      document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
+      document.getElementById('filtro-status').addEventListener('change', renderHistorico);
+      // Restaurar pasta de salvamento automático
+      restaurarPasta();
+    };
+
+    function hoje() {
+      var d = new Date();
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    // =====================================================
+    // TABS
+    // =====================================================
+    function showTab(tab) {
+      var formPanel = document.getElementById('form-panel');
+      var historyPanel = document.getElementById('history-panel');
+      var tabForm = document.getElementById('tab-form');
+      var tabHistory = document.getElementById('tab-history');
+
+      if (tab === 'form') {
+        formPanel.classList.remove('hidden');
+        historyPanel.classList.remove('active');
+        tabForm.classList.add('active');
+        tabHistory.classList.remove('active');
+      } else {
+        formPanel.classList.add('hidden');
+        historyPanel.classList.add('active');
+        tabForm.classList.remove('active');
+        tabHistory.classList.add('active');
+        renderHistorico();
+      }
+    }
+
+    // =====================================================
+    // INTERVALOS
+    // =====================================================
+    function adicionarIntervalo(de, ate) {
+      de = de || '';
+      ate = ate || '';
+      var novoId = idContador++;
+      var div = document.createElement('div');
+      div.className = 'intervalo';
+      div.id = 'intervalo-' + novoId;
+      div.innerHTML =
+        '<div style="flex:1;min-width:90px;">' +
+        '<label class="form-label mb-0" for="de-' + novoId + '">De</label>' +
+        '<input type="time" class="form-control" value="' + de + '" onchange="calcularTotal()" id="de-' + novoId + '">' +
+        '</div>' +
+        '<div style="flex:1;min-width:90px;">' +
+        '<label class="form-label mb-0" for="ate-' + novoId + '">Até</label>' +
+        '<input type="time" class="form-control" value="' + ate + '" onchange="calcularTotal()" id="ate-' + novoId + '">' +
+        '</div>' +
+        '<div class="parcial-badge" id="parcial-' + novoId + '">—</div>' +
+        '<button type="button" class="btn-sm-icon remove" onclick="removerIntervalo(' + novoId + ')" title="Remover">' +
+        '<i class="bi bi-trash3"></i>' +
+        '</button>';
+      document.getElementById('intervalos').appendChild(div);
+      calcularTotal();
+    }
+
+    function removerIntervalo(id) {
+      var el = document.getElementById('intervalo-' + id);
+      if (el) { el.remove(); calcularTotal(); }
+    }
+
+    function calcularTotal() {
+      var totalMinutos = 0;
+      for (var i = 0; i < idContador; i++) {
+        var de = document.getElementById('de-' + i);
+        var ate = document.getElementById('ate-' + i);
+        var parcial = document.getElementById('parcial-' + i);
+        if (de && ate && de.value && ate.value) {
+          var p1 = de.value.split(':'), p2 = ate.value.split(':');
+          var h1 = parseInt(p1[0]), m1 = parseInt(p1[1]);
+          var h2 = parseInt(p2[0]), m2 = parseInt(p2[1]);
+          var mins = (h2 * 60 + m2) - (h1 * 60 + m1);
+          if (mins > 0) {
+            totalMinutos += mins;
+            if (parcial) parcial.textContent = formatarTempo(mins);
+          } else {
+            if (parcial) parcial.textContent = '—';
+          }
+        } else {
+          if (parcial) parcial.textContent = '—';
+        }
+      }
+      document.getElementById('total').textContent = formatarTempo(totalMinutos);
+    }
+
+    function formatarTempo(minutos) {
+      var h = Math.floor(minutos / 60).toString().padStart(2, '0');
+      var m = (minutos % 60).toString().padStart(2, '0');
+      return h + ':' + m;
+    }
+
+    function coletarIntervalos() {
+      var intervalos = [];
+      for (var i = 0; i < idContador; i++) {
+        var de = document.getElementById('de-' + i);
+        var ate = document.getElementById('ate-' + i);
+        if (de && ate && de.value && ate.value) {
+          intervalos.push({ de: de.value, ate: ate.value });
+        }
+      }
+      return intervalos;
+    }
+
+    // =====================================================
+    // SALVAR / CARREGAR
+    // =====================================================
+    function getRecords() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch (e) { return []; }
+    }
+    function saveRecords(records) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      autoExportar(records);
+    }
+
+    function salvarRegistro() {
+      var projeto = document.getElementById('campo-projeto').value.trim();
+      var data = document.getElementById('campo-data').value;
+      var ticket = document.getElementById('campo-ticket').value.trim();
+      var descricao = document.getElementById('campo-descricao').value.trim();
+      var intervalos = coletarIntervalos();
+
+      if (!projeto) { showToast('Informe o projeto/empresa!', true); return; }
+      if (!data) { showToast('Informe a data!', true); return; }
+      if (intervalos.length === 0) { showToast('Adicione pelo menos um intervalo!', true); return; }
+
+      // Calcular total em minutos
+      var totalMinutos = 0;
+      intervalos.forEach(function (iv) {
+        var p1 = iv.de.split(':'), p2 = iv.ate.split(':');
+        var mins = (parseInt(p2[0]) * 60 + parseInt(p2[1])) - (parseInt(p1[0]) * 60 + parseInt(p1[1]));
+        if (mins > 0) totalMinutos += mins;
+      });
+
+      var records = getRecords();
+
+      if (editandoId !== null) {
+        // Atualizar registro existente
+        for (var i = 0; i < records.length; i++) {
+          if (records[i].id === editandoId) {
+            records[i].projeto = projeto;
+            records[i].data = data;
+            records[i].ticket = ticket;
+            records[i].descricao = descricao;
+            records[i].intervalos = intervalos;
+            records[i].totalMinutos = totalMinutos;
+            break;
+          }
+        }
+        editandoId = null;
+        showToast('Registro atualizado!');
+      } else {
+        // Novo registro
+        var registro = {
+          id: Date.now(),
+          projeto: projeto,
+          data: data,
+          ticket: ticket,
+          descricao: descricao,
+          intervalos: intervalos,
+          totalMinutos: totalMinutos,
+          apontado: false
+        };
+        records.push(registro);
+        showToast('Registro salvo!');
+      }
+
+      saveRecords(records);
+      resetFormulario();
+    }
+
+    // =====================================================
+    // RESET
+    // =====================================================
+    function resetFormulario() {
+      document.getElementById('campo-projeto').value = '';
+      document.getElementById('campo-data').value = hoje();
+      document.getElementById('campo-ticket').value = '';
+      document.getElementById('campo-descricao').value = '';
+      document.getElementById('intervalos').innerHTML = '';
+      idContador = 0;
+      editandoId = null;
+      adicionarIntervalo();
+    }
+
+    // =====================================================
+    // HISTÓRICO
+    // =====================================================
+    function renderHistorico() {
+      var records = getRecords();
+      var listEl = document.getElementById('history-list');
+      var countEl = document.getElementById('history-count');
+
+      // Aplicar filtros
+      var filtroDe = document.getElementById('filtro-data-de').value;
+      var filtroAte = document.getElementById('filtro-data-ate').value;
+      var filtroProjeto = document.getElementById('filtro-projeto').value.toLowerCase().trim();
+      var filtroTicket = document.getElementById('filtro-ticket').value.toLowerCase().trim();
+      var filtroStatus = document.getElementById('filtro-status').value;
+
+      var filtrados = records.filter(function (r) {
+        if (filtroDe && r.data < filtroDe) return false;
+        if (filtroAte && r.data > filtroAte) return false;
+        if (filtroProjeto && r.projeto.toLowerCase().indexOf(filtroProjeto) === -1) return false;
+        if (filtroTicket && (!r.ticket || r.ticket.toLowerCase().indexOf(filtroTicket) === -1)) return false;
+        if (filtroStatus === 'sim' && !r.apontado) return false;
+        if (filtroStatus === 'nao' && r.apontado) return false;
+        return true;
+      });
+
+      // Ordenar por data (mais recente primeiro), depois por ID
+      filtrados.sort(function (a, b) {
+        if (a.data !== b.data) return b.data.localeCompare(a.data);
+        return b.id - a.id;
+      });
+
+      // Calcular total geral dos filtrados
+      var totalGeralMin = 0;
+      filtrados.forEach(function (r) { totalGeralMin += r.totalMinutos; });
+
+      countEl.textContent = filtrados.length + ' registro(s) · Total: ' + formatarTempo(totalGeralMin);
+
+      if (filtrados.length === 0) {
+        listEl.innerHTML =
+          '<div class="empty-state">' +
+          '<i class="bi bi-inbox"></i>' +
+          '<p>Nenhum registro encontrado.</p>' +
+          '</div>';
+        return;
+      }
+
+      // Agrupar por data
+      var grupos = {};
+      filtrados.forEach(function (r) {
+        if (!grupos[r.data]) grupos[r.data] = [];
+        grupos[r.data].push(r);
+      });
+
+      var html = '';
+      var datas = Object.keys(grupos).sort().reverse();
+      datas.forEach(function (dt) {
+        // Formatar data para exibição
+        var partes = dt.split('-');
+        var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
+        var diaSemana = getDiaSemana(dt);
+
+        // Total do dia
+        var totalDiaMin = 0;
+        grupos[dt].forEach(function (r) { totalDiaMin += r.totalMinutos; });
+
+        html += '<div class="date-group-header">' +
+          '<i class="bi bi-calendar3"></i> ' + dataFormatada + ' — ' + diaSemana +
+          '<span style="margin-left:auto;font-size:0.82rem;color:var(--accent);font-weight:700;">' +
+          formatarTempo(totalDiaMin) +
+          '</span>' +
+          '</div>';
+
+        grupos[dt].forEach(function (r) {
+          var ivHtml = '';
+          r.intervalos.forEach(function (iv) {
+            var p1 = iv.de.split(':'), p2 = iv.ate.split(':');
+            var mins = (parseInt(p2[0]) * 60 + parseInt(p2[1])) - (parseInt(p1[0]) * 60 + parseInt(p1[1]));
+            ivHtml += '<span><i class="bi bi-arrow-right-short"></i>' + iv.de + ' – ' + iv.ate +
+              ' (' + formatarTempo(Math.max(0, mins)) + ')</span>';
+          });
+
+          var isApontado = r.apontado ? true : false;
+          html += '<div class="history-card' + (isApontado ? ' apontado' : '') + '">' +
+            '<div class="apontado-wrapper">' +
+            '<label class="apontado-toggle">' +
+            '<input type="checkbox" ' + (isApontado ? 'checked' : '') + ' onchange="toggleApontado(' + r.id + ')">' +
+            '<span class="apontado-slider"></span>' +
+            '</label>' +
+            '<span class="apontado-label' + (isApontado ? ' checked' : '') + '">' + (isApontado ? '<i class="bi bi-check-circle-fill"></i> Apontado' : 'Não apontado') + '</span>' +
+            '</div>' +
+            '<div class="d-flex justify-content-between align-items-start">' +
+            '<div>' +
+            '<div class="project-name">' + escapeHtml(r.projeto) +
+            (r.ticket ? ' <span style="font-size:0.75rem;background:var(--primary-bg);color:var(--primary);padding:2px 8px;border-radius:6px;margin-left:6px;font-weight:600;">' + escapeHtml(r.ticket) + '</span>' : '') +
+            '</div>' +
+            '</div>' +
+            '<span class="total-badge">' + formatarTempo(r.totalMinutos) + '</span>' +
+            '</div>' +
+            (r.descricao ? '<div class="desc-text">' + escapeHtml(r.descricao) + '</div>' : '') +
+            '<div class="intervals-list">' + ivHtml + '</div>' +
+            '<div class="actions">' +
+            '<button class="btn-outline-custom" onclick="editarRegistro(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;">' +
+            '<i class="bi bi-pencil"></i> Editar' +
+            '</button>' +
+            '<button class="btn-danger-custom" onclick="excluirRegistro(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;">' +
+            '<i class="bi bi-trash3"></i> Excluir' +
+            '</button>' +
+            '</div>' +
+            '</div>';
+        });
+      });
+
+      listEl.innerHTML = html;
+    }
+
+    function getDiaSemana(dataStr) {
+      var dias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+      var partes = dataStr.split('-');
+      var d = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+      return dias[d.getDay()];
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // =====================================================
+    // EDITAR / EXCLUIR
+    // =====================================================
+    function editarRegistro(id) {
+      var records = getRecords();
+      var registro = null;
+      for (var i = 0; i < records.length; i++) {
+        if (records[i].id === id) { registro = records[i]; break; }
+      }
+      if (!registro) return;
+
+      // Preencher formulário com os dados do registro
+      document.getElementById('campo-projeto').value = registro.projeto;
+      document.getElementById('campo-data').value = registro.data;
+      document.getElementById('campo-ticket').value = registro.ticket || '';
+      document.getElementById('campo-descricao').value = registro.descricao || '';
+
+      // Limpar intervalos e recriar
+      document.getElementById('intervalos').innerHTML = '';
+      idContador = 0;
+      registro.intervalos.forEach(function (iv) {
+        adicionarIntervalo(iv.de, iv.ate);
+      });
+
+      editandoId = id;
+      showTab('form');
+      showToast('Editando registro — altere e clique em Salvar');
+
+      // Scroll para o topo
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function excluirRegistro(id) {
+      if (!confirm('Deseja realmente excluir este registro?')) return;
+      var records = getRecords();
+      records = records.filter(function (r) { return r.id !== id; });
+      saveRecords(records);
+      renderHistorico();
+      showToast('Registro excluído!');
+    }
+
+    // =====================================================
+    // FILTROS
+    // =====================================================
+    function limparFiltros() {
+      document.getElementById('filtro-data-de').value = '';
+      document.getElementById('filtro-data-ate').value = '';
+      document.getElementById('filtro-projeto').value = '';
+      document.getElementById('filtro-ticket').value = '';
+      document.getElementById('filtro-status').value = 'todos';
+      renderHistorico();
+    }
+
+    // =====================================================
+    // TOGGLE APONTADO
+    // =====================================================
+    function toggleApontado(id) {
+      var records = getRecords();
+      for (var i = 0; i < records.length; i++) {
+        if (records[i].id === id) {
+          records[i].apontado = !records[i].apontado;
+          break;
+        }
+      }
+      saveRecords(records);
+      renderHistorico();
+    }
+
+    // =====================================================
+    // EXPORTAR / IMPORTAR
+    // =====================================================
+    function exportarDados() {
+      var records = getRecords();
+      if (records.length === 0) {
+        showToast('Nenhum registro para exportar!', true);
+        return;
+      }
+      var json = JSON.stringify(records, null, 2);
+      var blob = new Blob([json], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'horas_' + hoje().replace(/-/g, '') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Arquivo exportado: ' + a.download);
+    }
+
+    function importarDados(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          var importados = JSON.parse(e.target.result);
+          if (!Array.isArray(importados)) {
+            showToast('Arquivo inválido!', true);
+            return;
+          }
+          var records = getRecords();
+          // Mapa de IDs existentes para evitar duplicatas
+          var idsExistentes = {};
+          records.forEach(function (r) { idsExistentes[r.id] = true; });
+          var novos = 0;
+          importados.forEach(function (r) {
+            if (r.id && r.projeto && r.data && r.intervalos && !idsExistentes[r.id]) {
+              records.push(r);
+              novos++;
+            }
+          });
+          saveRecords(records);
+          renderHistorico();
+          showToast(novos + ' registro(s) importado(s)!');
+        } catch (err) {
+          showToast('Erro ao ler arquivo: ' + err.message, true);
+        }
+      };
+      reader.readAsText(file);
+      // Reset do input para permitir importar o mesmo arquivo novamente
+      event.target.value = '';
+    }
+
+    // =====================================================
+    // SALVAMENTO AUTOMÁTICO EM PASTA
+    // =====================================================
+
+    // Abre o IndexedDB para persistir o handle da pasta
+    function abrirDB() {
+      return new Promise(function (resolve, reject) {
+        var req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = function (e) {
+          e.target.result.createObjectStore(DB_STORE);
+        };
+        req.onsuccess = function (e) { resolve(e.target.result); };
+        req.onerror = function (e) { reject(e.target.error); };
+      });
+    }
+
+    // Salva o handle da pasta no IndexedDB
+    function salvarHandleNoDB(handle) {
+      abrirDB().then(function (db) {
+        var tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(handle, 'dirHandle');
+      }).catch(function (err) {
+        console.warn('Erro ao salvar handle no IndexedDB:', err);
+      });
+    }
+
+    // Restaura o handle da pasta ao abrir a página
+    function restaurarPasta() {
+      abrirDB().then(function (db) {
+        var tx = db.transaction(DB_STORE, 'readonly');
+        var req = tx.objectStore(DB_STORE).get('dirHandle');
+        req.onsuccess = function (e) {
+          var handle = e.target.result;
+          if (!handle) return;
+          // Verificar permissão
+          handle.queryPermission({ mode: 'readwrite' }).then(function (perm) {
+            if (perm === 'granted') {
+              dirHandle = handle;
+              atualizarStatusAutosave('active', handle.name);
+            } else {
+              // Permissão expirada — guardar handle e mostrar botão de reativar
+              pendingHandle = handle;
+              atualizarStatusAutosave('pending', handle.name);
+            }
+          });
+        };
+      }).catch(function (err) {
+        console.warn('Erro ao restaurar pasta:', err);
+      });
+    }
+
+    // Reativa a permissão da pasta salva (um clique)
+    async function reativarPermissao() {
+      var handle = pendingHandle || dirHandle;
+      if (!handle) {
+        // Se não tem handle salvo, abrir o seletor
+        configurarPasta();
+        return;
+      }
+      try {
+        var perm = await handle.requestPermission({ mode: 'readwrite' });
+        if (perm === 'granted') {
+          dirHandle = handle;
+          pendingHandle = null;
+          atualizarStatusAutosave('active', handle.name);
+          showToast('Auto-save reativado: ' + handle.name);
+          // Exportar imediatamente
+          autoExportar(getRecords());
+        } else {
+          showToast('Permissão negada pelo navegador.', true);
+        }
+      } catch (err) {
+        showToast('Erro: ' + err.message, true);
+      }
+    }
+
+    // Usuário escolhe a pasta de salvamento
+    async function configurarPasta() {
+      try {
+        var handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        dirHandle = handle;
+        pendingHandle = null;
+        salvarHandleNoDB(handle);
+        atualizarStatusAutosave('active', handle.name);
+        showToast('Pasta configurada: ' + handle.name);
+        // Exportar imediatamente para a pasta escolhida
+        autoExportar(getRecords());
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          showToast('Erro ao configurar pasta: ' + err.message, true);
+        }
+      }
+    }
+
+    // Exporta automaticamente para a pasta configurada
+    async function autoExportar(records) {
+      if (!dirHandle) return;
+      if (!records || records.length === 0) return;
+      try {
+        var nomeArquivo = 'horas_' + hoje().replace(/-/g, '') + '.json';
+        var fileHandle = await dirHandle.getFileHandle(nomeArquivo, { create: true });
+        var writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(records, null, 2));
+        await writable.close();
+        atualizarStatusAutosave('active', dirHandle.name, ' · Salvo às ' + agora());
+      } catch (err) {
+        console.error('Erro ao salvar automaticamente:', err);
+        // Se perdeu permissão, mover para pendente (sem destruir o handle)
+        if (err.name === 'NotAllowedError') {
+          pendingHandle = dirHandle;
+          dirHandle = null;
+          atualizarStatusAutosave('pending', pendingHandle.name);
+          showToast('Permissão expirada. Clique em Reativar.', true);
+        }
+      }
+    }
+
+    function agora() {
+      var d = new Date();
+      return String(d.getHours()).padStart(2, '0') + ':' +
+        String(d.getMinutes()).padStart(2, '0') + ':' +
+        String(d.getSeconds()).padStart(2, '0');
+    }
+
+    function atualizarStatusAutosave(estado, nomePasta, extra) {
+      var el = document.getElementById('autosave-status');
+      var textEl = document.getElementById('autosave-text');
+      var reativarBtn = document.getElementById('autosave-reativar-btn');
+      var banner = document.getElementById('reativar-banner');
+      var bannerText = document.getElementById('reativar-banner-text');
+
+      if (estado === 'active') {
+        el.className = 'autosave-status active';
+        textEl.textContent = 'Auto-save: ' + (nomePasta || 'ativo') + (extra || '');
+        reativarBtn.style.display = 'none';
+        banner.classList.remove('show');
+      } else if (estado === 'pending') {
+        el.className = 'autosave-status inactive';
+        textEl.textContent = 'Pasta: ' + (nomePasta || '?') + ' — permissão expirada';
+        reativarBtn.style.display = '';
+        banner.classList.add('show');
+        bannerText.textContent = 'Auto-save na pasta "' + nomePasta + '" precisa ser reativado';
+      } else {
+        el.className = 'autosave-status inactive';
+        textEl.textContent = 'Salvamento automático: não configurado';
+        reativarBtn.style.display = 'none';
+        banner.classList.remove('show');
+      }
+    }
+
+    // =====================================================
+    // TOAST
+    // =====================================================
+    function showToast(msg, isError) {
+      var toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.background = isError ? 'var(--danger)' : 'var(--primary)';
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 2500);
+    }
+  </script>
+</body>
+
+</html>
