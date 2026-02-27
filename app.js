@@ -436,7 +436,8 @@ async function renderHistorico() {
                 (r.descricao ? '<div class="desc-text">' + escapeHtml(r.descricao) + '</div>' : '') +
                 '<div class="intervals-list">' + ivHtml + '</div>' +
                 '<div class="actions"><button class="btn-outline-custom" onclick="editarRegistro(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;"><i class="bi bi-pencil"></i> Editar</button>' +
-                '<button class="btn-danger-custom" onclick="excluirRegistro(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;"><i class="bi bi-trash3"></i> Excluir</button></div></div>';
+                '<button class="btn-danger-custom" onclick="excluirRegistro(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;"><i class="bi bi-trash3"></i> Excluir</button>' +
+                '<button class="btn-calendar" onclick="exportarParaCalendario(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;"><i class="bi bi-calendar-plus"></i> Calendário</button></div></div>';
         });
     });
     listEl.innerHTML = html;
@@ -473,6 +474,43 @@ async function excluirRegistro(id) {
     await _supabase.from('registros').delete().eq('id', id);
     renderHistorico();
     showToast('Registro exclu\u00eddo!');
+}
+
+function exportarParaCalendario(id) {
+    var reg = registrosList.find(function (r) { return r.id === id; });
+    if (!reg) return;
+    var projNome = reg.projetos ? reg.projetos.nome : 'Sem projeto';
+    var empNome = reg.projetos && reg.projetos.empresas ? reg.projetos.empresas.nome : '';
+    // Build title: Empresa - Projeto [#Ticket]
+    var titulo = '';
+    if (empNome) titulo += empNome + ' - ';
+    titulo += projNome;
+    if (reg.ticket) titulo += ' [' + reg.ticket + ']';
+    // Get first start and last end from intervals
+    var intervalos = reg.intervalos || [];
+    if (intervalos.length === 0) { showToast('Registro sem intervalos!', true); return; }
+    var primeiroInicio = intervalos[0].de;
+    var ultimoFim = intervalos[intervalos.length - 1].ate;
+    // Format dates: YYYYMMDDTHHMMSS
+    var dataBase = reg.data.replace(/-/g, '');
+    var dtInicio = dataBase + 'T' + primeiroInicio.replace(':', '') + '00';
+    var dtFim = dataBase + 'T' + ultimoFim.replace(':', '') + '00';
+    // Build description
+    var descricao = reg.descricao || '';
+    if (intervalos.length > 1) {
+        descricao += '\n\nIntervalos:';
+        intervalos.forEach(function (iv) {
+            descricao += '\n' + iv.de + ' - ' + iv.ate;
+        });
+    }
+    descricao += '\n\nTotal: ' + formatarTempo(reg.total_minutos);
+    // Build Google Calendar URL
+    var url = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        '&text=' + encodeURIComponent(titulo) +
+        '&dates=' + dtInicio + '/' + dtFim +
+        '&details=' + encodeURIComponent(descricao);
+    window.open(url, '_blank');
+    showToast('Abrindo Google Calendar...');
 }
 
 // =====================================================
