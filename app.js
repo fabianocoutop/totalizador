@@ -14,6 +14,7 @@ var projetosList = [];
 var registrosList = [];
 var idContador = 0;
 var editandoId = null;
+var appInitialized = false;
 
 // =====================================================
 // INIT
@@ -50,18 +51,22 @@ async function initApp() {
     var { data: profile } = await _supabase.from('profiles').select('nome').eq('id', currentUser.id).single();
     var nome = profile ? profile.nome : currentUser.email;
     document.getElementById('user-name').textContent = nome;
-    // Setup
-    document.getElementById('campo-data').value = hoje();
+    // Only initialize once
+    if (!appInitialized) {
+        appInitialized = true;
+        document.getElementById('campo-data').value = hoje();
+        adicionarIntervalo();
+        // Listeners
+        document.getElementById('filtro-data-de').addEventListener('change', renderHistorico);
+        document.getElementById('filtro-data-ate').addEventListener('change', renderHistorico);
+        document.getElementById('filtro-projeto-hist').addEventListener('change', renderHistorico);
+        document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
+        document.getElementById('filtro-status').addEventListener('change', renderHistorico);
+    }
+    // Always refresh data (empresas/projetos may have changed)
     await loadEmpresas();
     await loadProjetos();
     populateProjetoDropdown();
-    adicionarIntervalo();
-    // Listeners
-    document.getElementById('filtro-data-de').addEventListener('change', renderHistorico);
-    document.getElementById('filtro-data-ate').addEventListener('change', renderHistorico);
-    document.getElementById('filtro-projeto-hist').addEventListener('change', renderHistorico);
-    document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
-    document.getElementById('filtro-status').addEventListener('change', renderHistorico);
     showTab('form');
 }
 
@@ -228,6 +233,8 @@ function populateEmpresaDropdownCadastro() {
 function populateProjetoDropdown() {
     var sel = document.getElementById('campo-projeto');
     var selHist = document.getElementById('filtro-projeto-hist');
+    var currentVal = sel.value;
+    var currentHistVal = selHist.value;
     // Group by empresa
     var grupos = {};
     var semEmpresa = [];
@@ -263,6 +270,9 @@ function populateProjetoDropdown() {
     }
     sel.innerHTML = html;
     selHist.innerHTML = htmlHist;
+    // Restore selections
+    if (currentVal) sel.value = currentVal;
+    if (currentHistVal) selHist.value = currentHistVal;
 }
 
 // =====================================================
