@@ -4,3 +4,7 @@ Desktop.ini
 Thumbs.db
 .DS_Store
 historico/
+
+/dist
+/node_modules
+/android
