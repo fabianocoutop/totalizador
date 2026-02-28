@@ -788,6 +788,13 @@ textarea.form-control {
   }
 
   .cadastro-add-row {
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cadastro-add-row .form-control,
+  .cadastro-add-row .form-select,
+  .cadastro-add-row button {
+    width: 100%;
   }
 }
