@@ -67,7 +67,7 @@ async function initApp() {
     await loadEmpresas();
     await loadProjetos();
     populateProjetoDropdown();
-    showTab('form');
+    showTab('home');
 }
 
 // =====================================================
@@ -131,6 +131,7 @@ function showTab(tab) {
     document.getElementById(tab + '-panel').classList.add('active');
     if (tab === 'history') renderHistorico();
     if (tab === 'cadastros') { renderEmpresas(); renderProjetos(); }
+    if (tab === 'relatorios') renderRelatorios();
 }
 
 // =====================================================
@@ -540,6 +541,85 @@ function exportarDados() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast('Arquivo exportado!');
+}
+
+// =====================================================
+// RELATORIOS
+// =====================================================
+async function renderRelatorios() {
+    var statHoje = document.getElementById('stat-hoje');
+    var statSemana = document.getElementById('stat-semana');
+    var statMes = document.getElementById('stat-mes');
+    var ticketsList = document.getElementById('top-tickets-list');
+
+    statHoje.textContent = '...';
+    statSemana.textContent = '...';
+    statMes.textContent = '...';
+    ticketsList.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="spinner" style="margin:0 auto; width:24px; height:24px; border-width:3px;"></div><p style="margin-top:10px; font-size:0.9rem;">Carregando...</p></div>';
+
+    var { data, error } = await _supabase.from('registros').select('*').eq('user_id', currentUser.id);
+    if (error) {
+        showToast('Erro ao carregar relatórios', true);
+        ticketsList.innerHTML = '<div class="empty-state"><p>Erro ao carregar dados.</p></div>';
+        return;
+    }
+
+    var registros = data || [];
+    var dtHoje = hoje();
+    var dtSemana = obterInicioSemana();
+    var dtMes = obterInicioMes();
+
+    var minHoje = 0;
+    var minSemana = 0;
+    var minMes = 0;
+
+    var ticketHoras = {};
+
+    registros.forEach(function (r) {
+        if (r.data === dtHoje) minHoje += r.total_minutos;
+        if (r.data >= dtSemana && r.data <= dtHoje) minSemana += r.total_minutos;
+        if (r.data >= dtMes && r.data <= dtHoje) minMes += r.total_minutos;
+
+        var t = (r.ticket || '').trim().toUpperCase();
+        if (t) {
+            if (!ticketHoras[t]) ticketHoras[t] = { ticket: t, minutos: 0, projetoId: r.projeto_id };
+            ticketHoras[t].minutos += r.total_minutos;
+        }
+    });
+
+    statHoje.textContent = formatarTempo(minHoje);
+    statSemana.textContent = formatarTempo(minSemana);
+    statMes.textContent = formatarTempo(minMes);
+
+    var tops = Object.values(ticketHoras).sort(function (a, b) { return b.minutos - a.minutos; }).slice(0, 10);
+
+    if (tops.length === 0) {
+        ticketsList.innerHTML = '<div class="empty-state" style="padding:16px;"><i class="bi bi-inbox" style="font-size:1.5rem;"></i><p style="font-size:0.85rem;margin-top:8px;">Nenhum ticket encontrado nos registros.</p></div>';
+        return;
+    }
+
+    var html = '';
+    tops.forEach(function (t, i) {
+        html += '<div class="cadastro-item" style="margin-bottom:8px;"><div>' +
+            '<div class="item-name" style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="background:var(--primary-bg);color:var(--primary);font-size:0.8rem;font-weight:700;padding:2px 6px;border-radius:6px;">#' + (i + 1) + '</span> ' + escapeHtml(t.ticket) + '</div>' +
+            '<div class="item-sub">Total acumulado</div></div>' +
+            '<span class="total-badge">' + formatarTempo(t.minutos) + '</span></div>';
+    });
+    ticketsList.innerHTML = html;
+}
+
+function obterInicioSemana() {
+    var d = new Date();
+    var day = d.getDay(); // 0 is Sunday
+    var diff = d.getDate() - day + (day == 0 ? -6 : 1); // Get Monday
+    var monday = new Date(d.setDate(diff));
+    return monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0');
+}
+
+function obterInicioMes() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
 }
 
 // =====================================================
