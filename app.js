@@ -96,6 +96,8 @@ async function doRegister() {
     var email = document.getElementById('reg-email').value.trim();
     var password = document.getElementById('reg-password').value;
     if (!nome || !email || !password) { showAuthError('Preencha todos os campos.'); return; }
+    var passwordConfirm = document.getElementById('reg-password-confirm').value;
+    if (password !== passwordConfirm) { showAuthError('As senhas não coincidem.'); return; }
     if (password.length < 6) { showAuthError('A senha deve ter pelo menos 6 caracteres.'); return; }
     showLoading(true);
     var { error } = await _supabase.auth.signUp({ email: email, password: password, options: { data: { nome: nome }, emailRedirectTo: 'https://fabianocoutop.github.io/totalizador/' } });
@@ -575,4 +577,21 @@ function showToast(msg, isError) {
 function showLoading(show) {
     var el = document.getElementById('loading-overlay');
     if (el) el.style.display = show ? '' : 'none';
+}
+
+function togglePassword(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('i').className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        btn.querySelector('i').className = 'bi bi-eye';
+    }
+}
+
+function hidePassword(inputId, btn) {
+    var input = document.getElementById(inputId);
+    input.type = 'password';
+    btn.querySelector('i').className = 'bi bi-eye';
 }

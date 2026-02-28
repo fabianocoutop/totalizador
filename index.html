@@ -38,8 +38,14 @@
         </div>
         <div class="mb-3">
           <label class="form-label" for="login-password">Senha</label>
-          <input type="password" id="login-password" class="form-control" placeholder="Sua senha"
-            autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+          <div class="password-wrapper">
+            <input type="password" id="login-password" class="form-control" placeholder="Sua senha"
+              autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+            <button type="button" class="toggle-password" onmousedown="togglePassword('login-password', this)"
+              onmouseup="togglePassword('login-password', this)" onmouseleave="hidePassword('login-password', this)">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
         </div>
         <button class="btn-primary-custom w-100" onclick="doLogin()">
           <i class="bi bi-box-arrow-in-right"></i> Entrar
@@ -58,8 +64,26 @@
         </div>
         <div class="mb-3">
           <label class="form-label" for="reg-password">Senha</label>
-          <input type="password" id="reg-password" class="form-control" placeholder="Mínimo 6 caracteres"
-            autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+          <div class="password-wrapper">
+            <input type="password" id="reg-password" class="form-control" placeholder="Mínimo 6 caracteres"
+              autocomplete="new-password">
+            <button type="button" class="toggle-password" onmousedown="togglePassword('reg-password', this)"
+              onmouseup="togglePassword('reg-password', this)" onmouseleave="hidePassword('reg-password', this)">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="reg-password-confirm">Confirmar Senha</label>
+          <div class="password-wrapper">
+            <input type="password" id="reg-password-confirm" class="form-control" placeholder="Repita a senha"
+              autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+            <button type="button" class="toggle-password" onmousedown="togglePassword('reg-password-confirm', this)"
+              onmouseup="togglePassword('reg-password-confirm', this)"
+              onmouseleave="hidePassword('reg-password-confirm', this)">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
         </div>
         <button class="btn-primary-custom w-100" onclick="doRegister()">
           <i class="bi bi-person-plus"></i> Criar Conta
