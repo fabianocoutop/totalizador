@@ -100,6 +100,7 @@
     <div class="app-header">
       <h1><i class="bi bi-clock-history"></i> Ticket Metrics</h1>
       <div class="user-bar">
+        <button onclick="showTab('home')"><i class="bi bi-house"></i> Início</button>
         <span><i class="bi bi-person-circle"></i> <span id="user-name"></span></span>
         <button onclick="doLogout()"><i class="bi bi-box-arrow-right"></i> Sair</button>
       </div>
@@ -107,24 +108,7 @@
 
     <div class="container" style="max-width: 700px;">
 
-      <!-- TABS -->
-      <div class="nav-tabs-custom">
-        <button id="tab-home" onclick="showTab('home')">
-          <i class="bi bi-house"></i> Início
-        </button>
-        <button id="tab-form" onclick="showTab('form')">
-          <i class="bi bi-plus-circle"></i> Novo Registro
-        </button>
-        <button id="tab-history" onclick="showTab('history')">
-          <i class="bi bi-clock-history"></i> Histórico
-        </button>
-        <button id="tab-relatorios" onclick="showTab('relatorios')">
-          <i class="bi bi-bar-chart"></i> Relatórios
-        </button>
-        <button id="tab-cadastros" onclick="showTab('cadastros')">
-          <i class="bi bi-gear"></i> Cadastros
-        </button>
-      </div>
+      <!-- NAVEGACAO REMOVIDA (SUBSTITUIDA PELA TELA HOME) -->
 
       <!-- ========== HOME PANEL ========== -->
       <div id="home-panel" class="panel">

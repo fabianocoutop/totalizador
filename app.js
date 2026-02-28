@@ -62,12 +62,18 @@ async function initApp() {
         document.getElementById('filtro-projeto-hist').addEventListener('change', renderHistorico);
         document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
         document.getElementById('filtro-status').addEventListener('change', renderHistorico);
+
+        // Carrega os dados gerais e manda pra home apenas na primeira vez
+        await loadEmpresas();
+        await loadProjetos();
+        populateProjetoDropdown();
+        showTab('home');
+    } else {
+        // Apenas atualiza dados em background pra nao trocar a tela do usuario
+        await loadEmpresas();
+        await loadProjetos();
+        populateProjetoDropdown();
     }
-    // Always refresh data (empresas/projetos may have changed)
-    await loadEmpresas();
-    await loadProjetos();
-    populateProjetoDropdown();
-    showTab('home');
 }
 
 // =====================================================
@@ -127,8 +133,10 @@ function showAuthError(msg) {
 function showTab(tab) {
     document.querySelectorAll('.nav-tabs-custom button').forEach(function (b) { b.classList.remove('active'); });
     document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById(tab + '-panel').classList.add('active');
+    var tabBtn = document.getElementById('tab-' + tab);
+    if (tabBtn) tabBtn.classList.add('active');
+    var panel = document.getElementById(tab + '-panel');
+    if (panel) panel.classList.add('active');
     if (tab === 'history') renderHistorico();
     if (tab === 'cadastros') { renderEmpresas(); renderProjetos(); }
     if (tab === 'relatorios') renderRelatorios();
