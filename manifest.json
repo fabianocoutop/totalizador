@@ -1,0 +1,19 @@
+{
+  "name": "Ticket Metrics",
+  "short_name": "Ticket Metrics",
+  "description": "Registre e gerencie o tempo dedicado aos seus projetos",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "stopwatch.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
