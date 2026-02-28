@@ -12,9 +12,10 @@ var currentUser = null;
 var empresasList = [];
 var projetosList = [];
 var registrosList = [];
-var idContador = 0;
-var editandoId = null;
-var appInitialized = false;
+var historyPage = 1;
+var HISTORY_PAGE_SIZE = 15;
+var chartDiarioInst = null;
+var chartTicketsInst = null;
 
 // =====================================================
 // INIT
@@ -389,10 +390,14 @@ function resetFormulario() {
 // =====================================================
 // HISTORICO
 // =====================================================
-async function renderHistorico() {
+async function renderHistorico(isLoadMore = false) {
+    if (isLoadMore !== true) historyPage = 1;
     var listEl = document.getElementById('history-list');
     var countEl = document.getElementById('history-count');
-    listEl.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto;"></div><p style="margin-top:12px;">Carregando...</p></div>';
+    if (!isLoadMore) {
+        listEl.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto;"></div><p style="margin-top:12px;">Carregando...</p></div>';
+        countEl.textContent = '...';
+    }
     var query = _supabase.from('registros').select('*, projetos(nome, empresas(nome))').eq('user_id', currentUser.id).order('data', { ascending: false }).order('created_at', { ascending: false });
     var filtroDe = document.getElementById('filtro-data-de').value;
     var filtroAte = document.getElementById('filtro-data-ate').value;
@@ -415,8 +420,11 @@ async function renderHistorico() {
     filtrados.forEach(function (r) { totalGeralMin += r.total_minutos; });
     countEl.textContent = filtrados.length + ' registro(s) \u00b7 Total: ' + formatarTempo(totalGeralMin);
     if (filtrados.length === 0) { listEl.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhum registro encontrado.</p></div>'; return; }
+
+    var paginatedList = filtrados.slice(0, historyPage * HISTORY_PAGE_SIZE);
+
     var grupos = {};
-    filtrados.forEach(function (r) { if (!grupos[r.data]) grupos[r.data] = []; grupos[r.data].push(r); });
+    paginatedList.forEach(function (r) { if (!grupos[r.data]) grupos[r.data] = []; grupos[r.data].push(r); });
     var html = '';
     Object.keys(grupos).sort().reverse().forEach(function (dt) {
         var partes = dt.split('-');
@@ -451,7 +459,17 @@ async function renderHistorico() {
                 '<button class="btn-calendar" onclick="exportarParaCalendario(' + r.id + ')" style="padding:5px 12px;font-size:0.8rem;"><i class="bi bi-calendar-plus"></i> Calendário</button></div></div>';
         });
     });
+
+    if (historyPage * HISTORY_PAGE_SIZE < filtrados.length) {
+        html += '<div style="text-align:center; padding: 20px 0;"><button class="btn-outline-custom" onclick="loadMoreHistory()" style="padding: 10px 24px; font-weight: 600;"><i class="bi bi-arrow-down-circle"></i> Carregar Mais Registros</button></div>';
+    }
+
     listEl.innerHTML = html;
+}
+
+function loadMoreHistory() {
+    historyPage++;
+    renderHistorico(true);
 }
 
 // =====================================================
@@ -599,22 +617,82 @@ async function renderRelatorios() {
     statSemana.textContent = formatarTempo(minSemana);
     statMes.textContent = formatarTempo(minMes);
 
-    var tops = Object.values(ticketHoras).sort(function (a, b) { return b.minutos - a.minutos; }).slice(0, 10);
+    var tops = Object.values(ticketHoras).sort(function (a, b) { return b.minutos - a.minutos; }).slice(0, 5);
 
-    if (tops.length === 0) {
-        ticketsList.innerHTML = '<div class="empty-state" style="padding:16px;"><i class="bi bi-inbox" style="font-size:1.5rem;"></i><p style="font-size:0.85rem;margin-top:8px;">Nenhum ticket encontrado nos registros.</p></div>';
-        return;
+    // Preparar graficos
+    var diasData = [];
+    var diasLabels = [];
+    var dtRef = new Date();
+    for (var i = 6; i >= 0; i--) {
+        var d = new Date(dtRef);
+        d.setDate(d.getDate() - i);
+        var dStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        var diaSemanaCurto = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][d.getDay()];
+        diasLabels.push(diaSemanaCurto);
+        var soma = 0;
+        registros.forEach(function (r) { if (r.data === dStr) soma += r.total_minutos; });
+        diasData.push((soma / 60).toFixed(2));
     }
 
-    var html = '';
-    tops.forEach(function (t, i) {
-        html += '<div class="cadastro-item" style="margin-bottom:8px;"><div>' +
-            '<div class="item-name" style="display:flex;align-items:center;gap:8px;">' +
-            '<span style="background:var(--primary-bg);color:var(--primary);font-size:0.8rem;font-weight:700;padding:2px 6px;border-radius:6px;">#' + (i + 1) + '</span> ' + escapeHtml(t.ticket) + '</div>' +
-            '<div class="item-sub">Total acumulado</div></div>' +
-            '<span class="total-badge">' + formatarTempo(t.minutos) + '</span></div>';
+    if (chartDiarioInst) chartDiarioInst.destroy();
+    var ctxD = document.getElementById('chartDiario').getContext('2d');
+    chartDiarioInst = new Chart(ctxD, {
+        type: 'bar',
+        data: {
+            labels: diasLabels,
+            datasets: [{
+                data: diasData,
+                backgroundColor: '#4f46e5',
+                borderRadius: 6,
+                barThickness: 'flex',
+                maxBarThickness: 32
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function (ctx) { return ctx.parsed.y + ' hrs'; } } }
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false } },
+                y: { grid: { display: false }, border: { display: false }, ticks: { display: false } }
+            }
+        }
     });
-    ticketsList.innerHTML = html;
+
+    var tkLabels = tops.map(function (t) { return '#' + t.ticket; });
+    var tkData = tops.map(function (t) { return (t.minutos / 60).toFixed(2); });
+
+    if (chartTicketsInst) chartTicketsInst.destroy();
+    var ctxT = document.getElementById('chartTickets').getContext('2d');
+    chartTicketsInst = new Chart(ctxT, {
+        type: 'bar',
+        data: {
+            labels: tkLabels,
+            datasets: [{
+                data: tkData,
+                backgroundColor: '#06b6d4',
+                borderRadius: 6,
+                barThickness: 'flex',
+                maxBarThickness: 24
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function (ctx) { return ctx.parsed.x + ' hrs'; } } }
+            },
+            scales: {
+                x: { grid: { display: false }, border: { display: false }, ticks: { display: false } },
+                y: { grid: { display: false }, border: { display: false } }
+            }
+        }
+    });
 }
 
 function obterInicioSemana() {
@@ -676,10 +754,4 @@ function togglePassword(inputId, btn) {
         input.type = 'password';
         btn.querySelector('i').className = 'bi bi-eye';
     }
-}
-
-function hidePassword(inputId, btn) {
-    var input = document.getElementById(inputId);
-    input.type = 'password';
-    btn.querySelector('i').className = 'bi bi-eye';
 }

@@ -42,8 +42,7 @@
           <div class="password-wrapper">
             <input type="password" id="login-password" class="form-control" placeholder="Sua senha"
               autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-            <button type="button" class="toggle-password" onmousedown="togglePassword('login-password', this)"
-              onmouseup="togglePassword('login-password', this)" onmouseleave="hidePassword('login-password', this)">
+            <button type="button" class="toggle-password" onclick="togglePassword('login-password', this)">
               <i class="bi bi-eye"></i>
             </button>
           </div>
@@ -68,8 +67,7 @@
           <div class="password-wrapper">
             <input type="password" id="reg-password" class="form-control" placeholder="Mínimo 6 caracteres"
               autocomplete="new-password">
-            <button type="button" class="toggle-password" onmousedown="togglePassword('reg-password', this)"
-              onmouseup="togglePassword('reg-password', this)" onmouseleave="hidePassword('reg-password', this)">
+            <button type="button" class="toggle-password" onclick="togglePassword('reg-password', this)">
               <i class="bi bi-eye"></i>
             </button>
           </div>
@@ -79,9 +77,7 @@
           <div class="password-wrapper">
             <input type="password" id="reg-password-confirm" class="form-control" placeholder="Repita a senha"
               autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
-            <button type="button" class="toggle-password" onmousedown="togglePassword('reg-password-confirm', this)"
-              onmouseup="togglePassword('reg-password-confirm', this)"
-              onmouseleave="hidePassword('reg-password-confirm', this)">
+            <button type="button" class="toggle-password" onclick="togglePassword('reg-password-confirm', this)">
               <i class="bi bi-eye"></i>
             </button>
           </div>
@@ -162,15 +158,17 @@
           </div>
         </div>
 
+        <div class="card-custom mb-3">
+          <div class="section-title"><i class="bi bi-bar-chart-fill"></i> Horas Diárias (Últimos 7 dias)</div>
+          <div class="chart-container" style="position: relative; height:240px; width:100%">
+            <canvas id="chartDiario"></canvas>
+          </div>
+        </div>
+
         <div class="card-custom">
-          <div class="section-title"><i class="bi bi-trophy"></i> Top 10 Tickets (Mais Horas)</div>
-          <p class="text-muted" style="font-size:0.85rem; margin-top:-10px; margin-bottom:14px;">
-            Considera todos os seus registros apontados historicamente.
-          </p>
-          <div id="top-tickets-list">
-            <div class="empty-state" style="padding:20px;">
-              <div class="spinner" style="margin:0 auto; width:24px; height:24px; border-width:3px;"></div>
-            </div>
+          <div class="section-title"><i class="bi bi-trophy"></i> Top 5 Tickets (Mais Horas)</div>
+          <div class="chart-container" style="position: relative; height:260px; width:100%">
+            <canvas id="chartTickets"></canvas>
           </div>
         </div>
       </div>
@@ -308,6 +306,7 @@
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
 
 </body>
