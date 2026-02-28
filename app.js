@@ -98,7 +98,7 @@ async function doRegister() {
     if (!nome || !email || !password) { showAuthError('Preencha todos os campos.'); return; }
     if (password.length < 6) { showAuthError('A senha deve ter pelo menos 6 caracteres.'); return; }
     showLoading(true);
-    var { error } = await _supabase.auth.signUp({ email: email, password: password, options: { data: { nome: nome } } });
+    var { error } = await _supabase.auth.signUp({ email: email, password: password, options: { data: { nome: nome }, emailRedirectTo: 'https://fabianocoutop.github.io/totalizador/' } });
     showLoading(false);
     if (error) { showAuthError(error.message); return; }
     showAuthError('');
