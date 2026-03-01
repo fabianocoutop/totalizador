@@ -12,6 +12,9 @@ var currentUser = null;
 var empresasList = [];
 var projetosList = [];
 var registrosList = [];
+var idContador = 0;
+var editandoId = null;
+var appInitialized = false;
 var historyPage = 1;
 var HISTORY_PAGE_SIZE = 15;
 var chartDiarioInst = null;
@@ -20,60 +23,67 @@ var chartTicketsInst = null;
 // =====================================================
 // INIT
 // =====================================================
-window.onload = function () {
-    checkSession();
-};
+checkSession();
 
 async function checkSession() {
-    showLoading(true);
-    var { data } = await _supabase.auth.getSession();
-    if (data.session) {
-        currentUser = data.session.user;
-        await initApp();
-    }
-    showLoading(false);
-
-    _supabase.auth.onAuthStateChange(function (event, session) {
-        if (event === 'SIGNED_IN' && session) {
-            currentUser = session.user;
-            initApp();
-        } else if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            document.getElementById('auth-screen').style.display = '';
-            document.getElementById('app-screen').style.display = 'none';
+    try {
+        showLoading(true);
+        var { data } = await _supabase.auth.getSession();
+        if (data && data.session) {
+            currentUser = data.session.user;
+            await initApp();
         }
-    });
+        showLoading(false);
+
+        _supabase.auth.onAuthStateChange(function (event, session) {
+            if (event === 'SIGNED_IN' && session) {
+                currentUser = session.user;
+                initApp();
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                document.getElementById('auth-screen').style.display = '';
+                document.getElementById('app-screen').style.display = 'none';
+            }
+        });
+    } catch (e) {
+        showLoading(false);
+        console.error("Auth ERRO:", e);
+    }
 }
 
 async function initApp() {
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-screen').style.display = '';
-    // Load profile name
-    var { data: profile } = await _supabase.from('profiles').select('nome').eq('id', currentUser.id).single();
-    var nome = profile ? profile.nome : currentUser.email;
-    document.getElementById('user-name').textContent = nome;
-    // Only initialize once
-    if (!appInitialized) {
-        appInitialized = true;
-        document.getElementById('campo-data').value = hoje();
-        adicionarIntervalo();
-        // Listeners
-        document.getElementById('filtro-data-de').addEventListener('change', renderHistorico);
-        document.getElementById('filtro-data-ate').addEventListener('change', renderHistorico);
-        document.getElementById('filtro-projeto-hist').addEventListener('change', renderHistorico);
-        document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
-        document.getElementById('filtro-status').addEventListener('change', renderHistorico);
+    try {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = '';
 
-        // Carrega os dados gerais e manda pra home apenas na primeira vez
-        await loadEmpresas();
-        await loadProjetos();
-        populateProjetoDropdown();
-        showTab('home');
-    } else {
-        // Apenas atualiza dados em background pra nao trocar a tela do usuario
-        await loadEmpresas();
-        await loadProjetos();
-        populateProjetoDropdown();
+        var { data: profile } = await _supabase.from('profiles').select('nome').eq('id', currentUser.id).single();
+        var nome = profile ? profile.nome : currentUser.email;
+        document.getElementById('user-name').textContent = nome;
+
+        if (!appInitialized) {
+            appInitialized = true;
+            document.getElementById('campo-data').value = hoje();
+            adicionarIntervalo();
+
+            document.getElementById('filtro-data-de').addEventListener('change', renderHistorico);
+            document.getElementById('filtro-data-ate').addEventListener('change', renderHistorico);
+            document.getElementById('filtro-projeto-hist').addEventListener('change', renderHistorico);
+            document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
+            document.getElementById('filtro-status').addEventListener('change', renderHistorico);
+
+            await loadEmpresas();
+            await loadProjetos();
+            populateProjetoDropdown();
+            showTab('home');
+        } else {
+            await loadEmpresas();
+            await loadProjetos();
+            populateProjetoDropdown();
+        }
+    } catch (e) {
+        showLoading(false);
+        console.error("Init ERRO:", e);
+        showToast("Falha ao iniciar o painel.", true);
     }
 }
 
@@ -576,17 +586,14 @@ async function renderRelatorios() {
     var statHoje = document.getElementById('stat-hoje');
     var statSemana = document.getElementById('stat-semana');
     var statMes = document.getElementById('stat-mes');
-    var ticketsList = document.getElementById('top-tickets-list');
 
     statHoje.textContent = '...';
     statSemana.textContent = '...';
     statMes.textContent = '...';
-    ticketsList.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="spinner" style="margin:0 auto; width:24px; height:24px; border-width:3px;"></div><p style="margin-top:10px; font-size:0.9rem;">Carregando...</p></div>';
 
     var { data, error } = await _supabase.from('registros').select('*').eq('user_id', currentUser.id);
     if (error) {
         showToast('Erro ao carregar relatórios', true);
-        ticketsList.innerHTML = '<div class="empty-state"><p>Erro ao carregar dados.</p></div>';
         return;
     }
 
