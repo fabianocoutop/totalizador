@@ -20,6 +20,7 @@ var planList = [];
 var editandoPlanId = null;
 var chartDiarioInst = null;
 var chartTicketsInst = null;
+var HISTORY_PAGE_SIZE = 20;
 
 // =====================================================
 // INIT
