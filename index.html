@@ -96,6 +96,7 @@
     <div class="app-header">
       <h1><i class="bi bi-clock-history"></i> Ticket Metrics</h1>
       <div class="user-bar">
+        <button onclick="showTab('home')"><i class="bi bi-house"></i> Início</button>
         <span><i class="bi bi-person-circle"></i> <span id="user-name"></span></span>
         <button onclick="doLogout()"><i class="bi bi-box-arrow-right"></i> Sair</button>
       </div>
@@ -107,7 +108,49 @@
 
       <!-- ========== HOME PANEL ========== -->
       <div id="home-panel" class="panel">
-        <!-- Nova Home = Visão Agenda Direta -->
+        <div class="home-grid">
+          <div class="home-card" style="grid-column: 1 / -1; border-color: var(--primary);"
+            onclick="showTab('planejamento')">
+            <div class="icon-wrapper"
+              style="color: #4285f4; background: rgba(66, 133, 244, 0.1); margin-bottom: 8px; height: 48px;">
+              <i class="bi bi-calendar-day"></i>
+            </div>
+            <h3>Planejamento do Dia</h3>
+            <p>Organize sua agenda diária e converta em registros.</p>
+          </div>
+          <div class="home-card" onclick="showTab('form')">
+            <div class="icon-wrapper" style="color: var(--primary); background: rgba(79, 70, 229, 0.1);">
+              <i class="bi bi-plus-circle"></i>
+            </div>
+            <h3>Novo Registro</h3>
+            <p>Apontar horas em projetos e tickets.</p>
+          </div>
+          <div class="home-card" onclick="showTab('history')">
+            <div class="icon-wrapper" style="color: var(--accent); background: rgba(6, 182, 212, 0.1);">
+              <i class="bi bi-clock-history"></i>
+            </div>
+            <h3>Histórico</h3>
+            <p>Consultar, editar ou exportar apontamentos.</p>
+          </div>
+          <div class="home-card" onclick="showTab('relatorios')">
+            <div class="icon-wrapper" style="color: var(--success); background: rgba(16, 185, 129, 0.1);">
+              <i class="bi bi-bar-chart"></i>
+            </div>
+            <h3>Relatórios</h3>
+            <p>Acompanhar métricas de horas e tickets.</p>
+          </div>
+          <div class="home-card" onclick="showTab('cadastros')">
+            <div class="icon-wrapper" style="color: var(--text-muted); background: rgba(100, 116, 139, 0.1);">
+              <i class="bi bi-gear"></i>
+            </div>
+            <h3>Cadastros</h3>
+            <p>Gerenciar empresas e projetos.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== PLANEJAMENTO PANEL ========== -->
+      <div id="planejamento-panel" class="panel">
         <div class="card-custom mb-3" style="padding: 16px;">
           <div class="d-flex justify-content-between align-items-center mb-0">
             <button class="btn-sm-icon outline" onclick="mudarDiaPlanejamento(-1)"><i
@@ -119,20 +162,17 @@
           </div>
         </div>
 
-        <div class="card-custom" style="padding: 0; overflow: hidden; margin-bottom: 70px;">
+        <div class="card-custom" style="padding: 0; overflow: hidden;">
           <div class="plan-header-actions d-flex p-3 border-bottom justify-content-between align-items-center bg-light">
-            <h3 class="m-0 fs-5 fw-bold text-dark"><i class="bi bi-calendar-day text-primary"></i> Planejamento Diário
-            </h3>
+            <h3 class="m-0 fs-5 fw-bold text-dark"><i class="bi bi-view-list text-primary"></i> Agenda</h3>
             <button class="btn-primary-custom btn-sm" onclick="abrirModalPlan()"><i class="bi bi-plus-lg"></i>
-              Criar Tarefa</button>
+              Criar</button>
           </div>
           <div class="timeline-container" id="timeline-container">
             <!-- Renderizado via JS -->
           </div>
         </div>
       </div>
-
-      <!-- ABA PLANEJAMENTO REMOVIDA (AGORA É A HOME) -->
 
       <!-- MODAL PLANEJAMENTO -->
       <div class="modal-overlay" id="modal-plan" style="display:none;">

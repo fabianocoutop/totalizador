@@ -149,9 +149,9 @@ function showAuthError(msg) {
 // TABS
 // =====================================================
 function showTab(tab) {
-    document.querySelectorAll('.bottom-nav-item').forEach(function (b) { b.classList.remove('active'); });
+    document.querySelectorAll('.nav-tabs-custom button').forEach(function (b) { b.classList.remove('active'); });
     document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
-    var tabBtn = document.querySelector('.bottom-nav-item[data-tab="' + tab + '"]');
+    var tabBtn = document.getElementById('tab-' + tab);
     if (tabBtn) tabBtn.classList.add('active');
     var panel = document.getElementById(tab + '-panel');
     if (panel) panel.classList.add('active');
