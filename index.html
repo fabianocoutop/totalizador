@@ -109,6 +109,15 @@
       <!-- ========== HOME PANEL ========== -->
       <div id="home-panel" class="panel">
         <div class="home-grid">
+          <div class="home-card" style="grid-column: 1 / -1; border-color: var(--primary);"
+            onclick="showTab('planejamento')">
+            <div class="icon-wrapper"
+              style="color: #4285f4; background: rgba(66, 133, 244, 0.1); margin-bottom: 8px; height: 48px;">
+              <i class="bi bi-calendar-day"></i>
+            </div>
+            <h3>Planejamento do Dia</h3>
+            <p>Organize sua agenda diária e converta em registros.</p>
+          </div>
           <div class="home-card" onclick="showTab('form')">
             <div class="icon-wrapper" style="color: var(--primary); background: rgba(79, 70, 229, 0.1);">
               <i class="bi bi-plus-circle"></i>
@@ -136,6 +145,86 @@
             </div>
             <h3>Cadastros</h3>
             <p>Gerenciar empresas e projetos.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== PLANEJAMENTO PANEL ========== -->
+      <div id="planejamento-panel" class="panel">
+        <div class="card-custom mb-3" style="padding: 16px;">
+          <div class="d-flex justify-content-between align-items-center mb-0">
+            <button class="btn-sm-icon outline" onclick="mudarDiaPlanejamento(-1)"><i
+                class="bi bi-chevron-left"></i></button>
+            <input type="date" id="filtro-data-plan" class="form-control text-center fw-bold"
+              style="max-width: 160px; border:none; background:var(--primary-bg); color:var(--primary);">
+            <button class="btn-sm-icon outline" onclick="mudarDiaPlanejamento(1)"><i
+                class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <div class="card-custom" style="padding: 0; overflow: hidden;">
+          <div class="plan-header-actions d-flex p-3 border-bottom justify-content-between align-items-center bg-light">
+            <h3 class="m-0 fs-5 fw-bold text-dark"><i class="bi bi-view-list text-primary"></i> Agenda</h3>
+            <button class="btn-primary-custom btn-sm" onclick="abrirModalPlan()"><i class="bi bi-plus-lg"></i>
+              Criar</button>
+          </div>
+          <div class="timeline-container" id="timeline-container">
+            <!-- Renderizado via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL PLANEJAMENTO -->
+      <div class="modal-overlay" id="modal-plan" style="display:none;">
+        <div class="modal-content-custom">
+          <div class="modal-header">
+            <h4 class="m-0 fs-5 fw-bold text-dark" id="modal-plan-title">Novo Planejamento</h4>
+            <button class="btn-close-custom" onclick="fecharModalPlan()">&times;</button>
+          </div>
+          <div class="modal-body p-3">
+            <div class="mb-3">
+              <label class="form-label">Título da Tarefa</label>
+              <input type="text" id="plan-titulo" class="form-control"
+                placeholder="Ex: Reunião Diária, Desenvolvimento...">
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-12">
+                <label class="form-label">Data</label>
+                <input type="date" id="plan-data" class="form-control">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Início</label>
+                <input type="time" id="plan-inicio" class="form-control">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Fim</label>
+                <input type="time" id="plan-fim" class="form-control">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Cor</label>
+              <div class="d-flex gap-2" id="plan-colors">
+                <div class="color-option active" style="background-color: var(--primary);"
+                  onclick="selecionarCorPlan(this)" data-color="var(--primary)"></div>
+                <div class="color-option" style="background-color: #0ea5e9;" onclick="selecionarCorPlan(this)"
+                  data-color="#0ea5e9"></div>
+                <div class="color-option" style="background-color: #10b981;" onclick="selecionarCorPlan(this)"
+                  data-color="#10b981"></div>
+                <div class="color-option" style="background-color: #f59e0b;" onclick="selecionarCorPlan(this)"
+                  data-color="#f59e0b"></div>
+                <div class="color-option" style="background-color: #ef4444;" onclick="selecionarCorPlan(this)"
+                  data-color="#ef4444"></div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Descrição (opcional)</label>
+              <textarea id="plan-desc" class="form-control" rows="3"
+                placeholder="Detalhes do que será feito..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer p-3 border-top bg-light d-flex justify-content-end gap-2">
+            <button class="btn-outline-custom" onclick="fecharModalPlan()">Cancelar</button>
+            <button class="btn-primary-custom" onclick="salvarPlanejamento()">Salvar</button>
           </div>
         </div>
       </div>

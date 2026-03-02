@@ -16,7 +16,8 @@ var idContador = 0;
 var editandoId = null;
 var appInitialized = false;
 var historyPage = 1;
-var HISTORY_PAGE_SIZE = 15;
+var planList = [];
+var editandoPlanId = null;
 var chartDiarioInst = null;
 var chartTicketsInst = null;
 
@@ -70,6 +71,11 @@ async function initApp() {
             document.getElementById('filtro-projeto-hist').addEventListener('change', renderHistorico);
             document.getElementById('filtro-ticket').addEventListener('input', renderHistorico);
             document.getElementById('filtro-status').addEventListener('change', renderHistorico);
+
+            document.getElementById('filtro-data-plan').addEventListener('change', function () {
+                loadPlanejamentos(this.value);
+            });
+            document.getElementById('filtro-data-plan').value = hoje();
 
             await loadEmpresas();
             await loadProjetos();
@@ -151,6 +157,12 @@ function showTab(tab) {
     if (tab === 'history') renderHistorico();
     if (tab === 'cadastros') { renderEmpresas(); renderProjetos(); }
     if (tab === 'relatorios') renderRelatorios();
+    if (tab === 'planejamento') {
+        if (!document.getElementById('filtro-data-plan').value) {
+            document.getElementById('filtro-data-plan').value = hoje();
+        }
+        loadPlanejamentos(document.getElementById('filtro-data-plan').value);
+    }
 }
 
 // =====================================================
@@ -713,6 +725,269 @@ function obterInicioSemana() {
 function obterInicioMes() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+}
+
+// =====================================================
+// PLANEJAMENTO (AGENDA)
+// =====================================================
+function mudarDiaPlanejamento(delta) {
+    var input = document.getElementById('filtro-data-plan');
+    var d = new Date(input.value + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    var nv = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    input.value = nv;
+    loadPlanejamentos(nv);
+}
+
+function selecionarCorPlan(el) {
+    document.querySelectorAll('.color-option').forEach(function (c) { c.classList.remove('active'); });
+    el.classList.add('active');
+}
+
+async function loadPlanejamentos(data) {
+    var listEl = document.getElementById('timeline-container');
+    listEl.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto;"></div></div>';
+
+    // Tenta ler se a tabela existe. 
+    var { data: dbData, error } = await _supabase.from('planejamentos')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('data', data)
+        .order('hora_inicio', { ascending: true });
+
+    if (error) {
+        // Se a tabela der erro (provavelmente n\u00e3o existe), fallback pra erro limpo
+        if (error.code === '42P01') {
+            listEl.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>A tabela "planejamentos" ainda n\u00e3o foi criada no Supabase.</p></div>';
+            return;
+        }
+        listEl.innerHTML = '<div class="empty-state"><p>Erro ao carregar: ' + error.message + '</p></div>';
+        return;
+    }
+
+    planList = dbData || [];
+    renderTimeline(planList);
+}
+
+function renderTimeline(list) {
+    var container = document.getElementById('timeline-container');
+    var html = '';
+
+    // Gera slots de hora (0 a 23)
+    for (var i = 0; i < 24; i++) {
+        var horaTag = String(i).padStart(2, '0') + ':00';
+        html += '<div class="time-slot"><span>' + horaTag + '</span>';
+        html += '<div class="time-slot-half"></div></div>';
+    }
+    container.innerHTML = html;
+
+    // Posiciona eventos
+    // Um slot (1 hora) tem height: 60px.
+    // Posição Y = (hora * 60) + (minuto)
+    list.forEach(function (plan) {
+        var h1 = parseInt(plan.hora_inicio.substring(0, 2)), m1 = parseInt(plan.hora_inicio.substring(3, 5));
+        var h2 = parseInt(plan.hora_fim.substring(0, 2)), m2 = parseInt(plan.hora_fim.substring(3, 5));
+
+        var startY = (h1 * 60) + m1;
+        var endY = (h2 * 60) + m2;
+        var totalMin = endY - startY;
+        if (totalMin < 15) totalMin = 15; // Mínimo visível
+
+        var rawDesc = plan.descricao || '';
+        var cor = 'var(--primary)';
+        var match = rawDesc.match(/\[cor:([^\]]+)\]/);
+        if (match) {
+            cor = match[1];
+        }
+
+        var eventDiv = document.createElement('div');
+        eventDiv.className = 'plan-event';
+        var topY = startY + 16; // Compensates for container 16px padding-top
+        eventDiv.style.top = topY + 'px';
+        eventDiv.style.setProperty('--event-height', totalMin + 'px');
+        eventDiv.style.background = cor;
+        eventDiv.style.borderLeftColor = 'rgba(0,0,0,0.3)';
+        eventDiv.onclick = function () { editarPlanejamento(plan.id); };
+
+        var title = escapeHtml(plan.titulo);
+        var timeStr = plan.hora_inicio.substring(0, 5) + ' — ' + plan.hora_fim.substring(0, 5);
+
+        eventDiv.innerHTML =
+            '<div class="plan-event-title" title="' + title + '">' + title + '</div>' +
+            '<div class="plan-event-time">' + timeStr + '</div>' +
+            '<div class="plan-event-actions">' +
+            '<button onclick="event.stopPropagation(); editarPlanejamento(' + plan.id + ')"><i class="bi bi-pencil"></i></button>' +
+            '<button onclick="event.stopPropagation(); apagarPlanejamento(' + plan.id + ')"><i class="bi bi-trash"></i></button>' +
+            '<button onclick="event.stopPropagation(); transformarEmRegistro(' + plan.id + ')" title="Gerar Apontamento"><i class="bi bi-clock-history"></i></button>' +
+            '<button onclick="event.stopPropagation(); syncPlanToCalendar(' + plan.id + ')" title="No Google Calendar"><i class="bi bi-calendar-check"></i></button>' +
+            '</div>';
+
+        container.appendChild(eventDiv);
+    });
+
+    // Indicador de Hora Atual (se for hoje)
+    var dataSelecionada = document.getElementById('filtro-data-plan').value;
+    if (dataSelecionada === hoje()) {
+        var now = new Date();
+        var nowY = (now.getHours() * 60) + now.getMinutes() + 16; // 16px offset
+        var currentLine = document.createElement('div');
+        currentLine.className = 'current-time-line';
+        currentLine.style.top = nowY + 'px';
+        container.appendChild(currentLine);
+
+        // Rolagem automática
+        setTimeout(function () {
+            var scrollPos = nowY - 100;
+            container.scrollTop = scrollPos > 0 ? scrollPos : 0;
+        }, 150);
+    }
+}
+
+function abrirModalPlan() {
+    var t = new Date();
+    document.getElementById('plan-titulo').value = '';
+    document.getElementById('plan-data').value = document.getElementById('filtro-data-plan').value || hoje();
+    var curH = String(t.getHours()).padStart(2, '0');
+    var nxtH = String((t.getHours() + 1) % 24).padStart(2, '0');
+    document.getElementById('plan-inicio').value = curH + ':00';
+    document.getElementById('plan-fim').value = nxtH + ':00';
+    document.getElementById('plan-desc').value = '';
+
+    document.querySelectorAll('.color-option').forEach(function (c) { c.classList.remove('active'); });
+    var firstColor = document.querySelector('.color-option');
+    if (firstColor) firstColor.classList.add('active');
+
+    editandoPlanId = null;
+    document.getElementById('modal-plan-title').textContent = 'Novo Planejamento';
+    document.getElementById('modal-plan').style.display = 'flex';
+}
+
+function fecharModalPlan() {
+    document.getElementById('modal-plan').style.display = 'none';
+    editandoPlanId = null;
+}
+
+function editarPlanejamento(id) {
+    var p = planList.find(function (x) { return x.id === id; });
+    if (!p) return;
+    document.getElementById('plan-titulo').value = p.titulo;
+    document.getElementById('plan-data').value = p.data;
+    document.getElementById('plan-inicio').value = p.hora_inicio.substring(0, 5);
+    document.getElementById('plan-fim').value = p.hora_fim.substring(0, 5);
+    var rawDesc = p.descricao || '';
+    var match = rawDesc.match(/\[cor:([^\]]+)\]/);
+    var cleanDesc = rawDesc;
+
+    document.querySelectorAll('.color-option').forEach(function (c) { c.classList.remove('active'); });
+
+    if (match) {
+        cleanDesc = rawDesc.replace(match[0], '').trim();
+        var opt = document.querySelector('.color-option[data-color="' + match[1] + '"]');
+        if (opt) opt.classList.add('active');
+        else if (document.querySelector('.color-option')) document.querySelector('.color-option').classList.add('active');
+    } else {
+        if (document.querySelector('.color-option')) document.querySelector('.color-option').classList.add('active');
+    }
+
+    document.getElementById('plan-desc').value = cleanDesc;
+    editandoPlanId = p.id;
+    document.getElementById('modal-plan-title').textContent = 'Editar Planejamento';
+    document.getElementById('modal-plan').style.display = 'flex';
+}
+
+async function salvarPlanejamento() {
+    var titulo = document.getElementById('plan-titulo').value.trim();
+    var data = document.getElementById('plan-data').value;
+    var inicio = document.getElementById('plan-inicio').value;
+    var fim = document.getElementById('plan-fim').value;
+    var desc = document.getElementById('plan-desc').value.trim();
+
+    if (!titulo || !data || !inicio || !fim) {
+        showToast('Preencha os dados obrigat\u00f3rios (T\u00edtulo e Hor\u00e1rios)', true);
+        return;
+    }
+    if (inicio >= fim) {
+        showToast('Hora fim deve ser maior que in\u00edcio', true);
+        return;
+    }
+
+    var corEl = document.querySelector('.color-option.active');
+    var corStr = corEl ? corEl.getAttribute('data-color') : 'var(--primary)';
+    var finalDesc = desc ? desc + '\n[cor:' + corStr + ']' : '[cor:' + corStr + ']';
+
+    showLoading(true);
+    var payload = {
+        user_id: currentUser.id,
+        titulo: titulo,
+        data: data,
+        hora_inicio: inicio + ':00',
+        hora_fim: fim + ':00',
+        descricao: finalDesc
+    };
+
+    var error = null;
+    if (editandoPlanId !== null) {
+        var res = await _supabase.from('planejamentos').update(payload).eq('id', editandoPlanId);
+        error = res.error;
+    } else {
+        var resIns = await _supabase.from('planejamentos').insert(payload);
+        error = resIns.error;
+    }
+
+    showLoading(false);
+    if (error) {
+        showToast('Erro: ' + error.message, true);
+        return;
+    }
+    showToast('Planejamento salvo!');
+    fecharModalPlan();
+    loadPlanejamentos(data);
+}
+
+async function apagarPlanejamento(id) {
+    if (!confirm('Deseja excluir este evento da agenda?')) return;
+    showLoading(true);
+    var { error } = await _supabase.from('planejamentos').delete().eq('id', id);
+    showLoading(false);
+    if (error) { showToast('Erro: ' + error.message, true); return; }
+    loadPlanejamentos(document.getElementById('filtro-data-plan').value);
+}
+
+function transformarEmRegistro(planId) {
+    var p = planList.find(function (x) { return x.id === planId; });
+    if (!p) return;
+
+    // Abre a tab de Novo Registro preenchendo as refer\u00eancias
+    showTab('form');
+    resetFormulario();
+    document.getElementById('campo-data').value = p.data;
+    document.getElementById('campo-descricao').value = '- Planejamento: ' + p.titulo + '\n' + (p.descricao || '');
+
+    // Configura o intervalo igual ao hor\u00e1rio planejado
+    document.getElementById('intervalos').innerHTML = '';
+    idContador = 0;
+    adicionarIntervalo(p.hora_inicio.substring(0, 5), p.hora_fim.substring(0, 5));
+
+    showToast('Registo pr\u00e9-preenchido. Vincule um Projeto/Ticket e Salve!');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function syncPlanToCalendar(planId) {
+    var p = planList.find(function (x) { return x.id === planId; });
+    if (!p) return;
+    var dtInicio = p.data.replace(/-/g, '') + 'T' + p.hora_inicio.replace(/:/g, '');
+    var dtFim = p.data.replace(/-/g, '') + 'T' + p.hora_fim.replace(/:/g, '');
+
+    var rawDesc = p.descricao || '';
+    var match = rawDesc.match(/\[cor:([^\]]+)\]/);
+    var cleanDesc = rawDesc;
+    if (match) cleanDesc = rawDesc.replace(match[0], '').trim();
+
+    var url = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        '&text=' + encodeURIComponent(p.titulo) +
+        '&dates=' + dtInicio + '/' + dtFim +
+        '&details=' + encodeURIComponent(cleanDesc + '\n\nGerado via Planejamento.');
+    window.open(url, '_blank');
 }
 
 // =====================================================
