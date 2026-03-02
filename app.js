@@ -449,11 +449,13 @@ async function renderHistorico(isLoadMore = false) {
     paginatedList.forEach(function (r) { if (!grupos[r.data]) grupos[r.data] = []; grupos[r.data].push(r); });
     var html = '';
     Object.keys(grupos).sort().reverse().forEach(function (dt) {
-        var partes = dt.split('-');
-        var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
-        var diaSemana = getDiaSemana(dt);
+        var partes = dt ? dt.split('-') : ['0000', '00', '00'];
+        var dataFormatada = partes.length >= 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : 'Sem Data';
+        var diaSemana = dt ? getDiaSemana(dt) : '-';
+
         var totalDiaMin = 0;
-        grupos[dt].forEach(function (r) { totalDiaMin += r.total_minutos; });
+        grupos[dt].forEach(function (r) { totalDiaMin += (r.total_minutos || 0); });
+
         html += '<div class="date-group-header"><i class="bi bi-calendar3"></i> ' + dataFormatada + ' \u2014 ' + diaSemana +
             '<span style="margin-left:auto;font-size:0.82rem;color:var(--accent);font-weight:700;">' + formatarTempo(totalDiaMin) + '</span></div>';
         grupos[dt].forEach(function (r) {
@@ -461,11 +463,13 @@ async function renderHistorico(isLoadMore = false) {
             var empNome = r.projetos && r.projetos.empresas ? r.projetos.empresas.nome : '';
             var ivHtml = '';
             (r.intervalos || []).forEach(function (iv) {
+                if (!iv || !iv.de || !iv.ate) return;
                 var p1 = iv.de.split(':'), p2 = iv.ate.split(':');
+                if (p1.length < 2 || p2.length < 2) return;
                 var mins = (parseInt(p2[0]) * 60 + parseInt(p2[1])) - (parseInt(p1[0]) * 60 + parseInt(p1[1]));
                 ivHtml += '<span><i class="bi bi-arrow-right-short"></i>' + iv.de + ' \u2013 ' + iv.ate + ' (' + formatarTempo(Math.max(0, mins)) + ')</span>';
             });
-            var isAp = r.apontado;
+            var isAp = r.apontado || false;
             html += '<div class="history-card' + (isAp ? ' apontado' : '') + '">' +
                 '<div class="apontado-wrapper"><label class="apontado-toggle"><input type="checkbox" ' + (isAp ? 'checked' : '') + ' onchange="toggleApontado(' + r.id + ')"><span class="apontado-slider"></span></label>' +
                 '<span class="apontado-label' + (isAp ? ' checked' : '') + '">' + (isAp ? '<i class="bi bi-check-circle-fill"></i> Apontado' : 'N\u00e3o apontado') + '</span></div>' +
