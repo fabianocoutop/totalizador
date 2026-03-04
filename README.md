@@ -4,6 +4,14 @@
 
 ---
 
+## 🔗 Acesso e Testes Live
+
+Experimente a aplicação agora mesmo através da Web ou baixe o APK para o seu Android:
+- 🌐 **Web App (Rodando no GitHub Pages):** [Acessar Ticket Metrics Online](https://fabianocoutop.github.io/totalizador/)
+- 📱 **Aplicativo Android (.APK):** [Baixar do Google Drive](https://drive.google.com/file/d/1ZoJI_CvYHKPyiE1UoBqTfAC7VJXGVu9Y/view?usp=sharing)
+
+---
+
 ## 🚀 Funcionalidades Principais
 
 ### 📅 Planejamento Diário (Agenda)
