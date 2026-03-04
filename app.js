@@ -812,7 +812,96 @@ function renderTimeline(list) {
         eventDiv.style.setProperty('--event-height', totalMin + 'px');
         eventDiv.style.background = cor;
         eventDiv.style.borderLeftColor = 'rgba(0,0,0,0.3)';
-        eventDiv.onclick = function () { editarPlanejamento(plan.id); };
+
+        // --- Iniciando Lógica Drag & Drop ---
+        var isDragging = false;
+        var hasMoved = false;
+        var startPointerY = 0;
+        var initialTop = 0;
+
+        eventDiv.onpointerdown = function (e) {
+            if (e.target.closest('button')) return; // ignora botões internos
+            isDragging = true;
+            hasMoved = false;
+            startPointerY = e.clientY;
+            initialTop = parseInt(eventDiv.style.top) || topY;
+            eventDiv.setPointerCapture(e.pointerId);
+            eventDiv.style.zIndex = '100';
+            eventDiv.style.transition = 'none';
+        };
+
+        eventDiv.onpointermove = function (e) {
+            if (!isDragging) return;
+            var deltaY = e.clientY - startPointerY;
+            if (Math.abs(deltaY) > 5) hasMoved = true;
+
+            var newTop = initialTop + deltaY;
+            var minTop = 16; // limite superior da grade
+            var maxTop = (24 * 60) - totalMin + 16; // limite inferior
+
+            if (newTop < minTop) newTop = minTop;
+            if (newTop > maxTop) newTop = maxTop;
+
+            eventDiv.style.top = newTop + 'px';
+        };
+
+        eventDiv.onpointerup = async function (e) {
+            if (!isDragging) return;
+            isDragging = false;
+            eventDiv.releasePointerCapture(e.pointerId);
+            eventDiv.style.zIndex = '';
+            eventDiv.style.transition = '';
+
+            if (!hasMoved) {
+                editarPlanejamento(plan.id); // Trata como clique normal se não arrastou
+                return;
+            }
+
+            var currentTop = parseInt(eventDiv.style.top) || topY;
+            var rawMins = currentTop - 16;
+            var snappedMins = Math.round(rawMins / 15) * 15; // Snap 15 minutos
+
+            eventDiv.style.top = (snappedMins + 16) + 'px';
+
+            var newH1 = Math.floor(snappedMins / 60);
+            var newM1 = snappedMins % 60;
+            var endMins = snappedMins + parseInt(plan.hora_fim.substring(0, 2)) * 60 + parseInt(plan.hora_fim.substring(3, 5)) - (parseInt(plan.hora_inicio.substring(0, 2)) * 60 + parseInt(plan.hora_inicio.substring(3, 5)));
+            var newH2 = Math.floor(endMins / 60);
+            var newM2 = endMins % 60;
+
+            var strInicio = String(newH1).padStart(2, '0') + ':' + String(newM1).padStart(2, '0') + ':00';
+            var strFim = String(newH2).padStart(2, '0') + ':' + String(newM2).padStart(2, '0') + ':00';
+
+            // Evita salvar no banco se não houve real alteração nos dados do banco (ex: drag tão pequeno que ficou no mesmo snap)
+            if (strInicio.substring(0, 5) === plan.hora_inicio.substring(0, 5)) {
+                eventDiv.style.top = topY + 'px';
+                return;
+            }
+
+            showLoading(true);
+            var { error } = await _supabase.from('planejamentos').update({
+                hora_inicio: strInicio,
+                hora_fim: strFim
+            }).eq('id', plan.id);
+            showLoading(false);
+
+            if (error) {
+                showToast('Erro ao mover evento: ' + error.message, true);
+                eventDiv.style.top = topY + 'px';
+            } else {
+                showToast('Horário atualizado!');
+                loadPlanejamentos(document.getElementById('filtro-data-plan').value);
+            }
+        };
+
+        eventDiv.onpointercancel = function (e) {
+            if (!isDragging) return;
+            isDragging = false;
+            eventDiv.releasePointerCapture(e.pointerId);
+            eventDiv.style.zIndex = '';
+            eventDiv.style.transition = '';
+            eventDiv.style.top = topY + 'px';
+        };
 
         var title = escapeHtml(plan.titulo);
         var timeStr = plan.hora_inicio.substring(0, 5) + ' — ' + plan.hora_fim.substring(0, 5);
@@ -946,6 +1035,9 @@ async function salvarPlanejamento() {
     }
     showToast('Planejamento salvo!');
     fecharModalPlan();
+
+    // Atualizar o seletor visual de datas para garantir que a interface navegue para a nova data caso alterada.
+    document.getElementById('filtro-data-plan').value = data;
     loadPlanejamentos(data);
 }
 

@@ -915,13 +915,18 @@ textarea.form-control {
   font-size: 0.85rem;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
   transition: all 0.2s;
   z-index: 10;
   display: flex;
   flex-direction: column;
   border-left: 4px solid rgba(0, 0, 0, 0.3);
   height: var(--event-height, 60px);
+}
+
+.plan-event:active {
+  cursor: grabbing;
 }
 
 .plan-event:hover {
