@@ -50,6 +50,27 @@
         <button class="btn-primary-custom w-100" onclick="doLogin()">
           <i class="bi bi-box-arrow-in-right"></i> Entrar
         </button>
+        <div class="text-center mt-2">
+          <a href="#" class="forgot-link" onclick="event.preventDefault(); showAuthTab('forgot')">Esqueceu a senha?</a>
+        </div>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div id="auth-form-forgot" class="auth-form">
+        <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:16px;">Digite seu email e enviaremos um link
+          para redefinir sua senha.</p>
+        <div class="mb-3">
+          <label class="form-label" for="forgot-email">Email</label>
+          <input type="email" id="forgot-email" class="form-control" placeholder="seu@email.com" autocomplete="email"
+            onkeydown="if(event.key==='Enter')doForgotPassword()">
+        </div>
+        <button class="btn-primary-custom w-100" onclick="doForgotPassword()">
+          <i class="bi bi-envelope"></i> Enviar Link de Recuperação
+        </button>
+        <div class="text-center mt-2">
+          <a href="#" class="forgot-link" onclick="event.preventDefault(); showAuthTab('login')"><i
+              class="bi bi-arrow-left"></i> Voltar ao login</a>
+        </div>
       </div>
 
       <!-- Register Form -->
@@ -97,14 +118,96 @@
       <h1><i class="bi bi-clock-history"></i> Ticket Metrics</h1>
       <div class="user-bar">
         <button onclick="showTab('home')"><i class="bi bi-house"></i> Início</button>
-        <span><i class="bi bi-person-circle"></i> <span id="user-name"></span></span>
+        <button onclick="toggleMenu()"><i class="bi bi-list"></i> Menu</button>
+        <span onclick="showTab('conta')" style="cursor:pointer;" title="Minha Conta">
+          <img id="header-avatar" src="" alt="" class="header-avatar" style="display:none;">
+          <i class="bi bi-person-circle" id="header-avatar-icon"></i>
+          <span id="user-name"></span>
+        </span>
         <button onclick="doLogout()"><i class="bi bi-box-arrow-right"></i> Sair</button>
       </div>
+    </div>
+
+    <!-- DRAWER MENU -->
+    <div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
+    <div class="menu-drawer" id="menu-drawer">
+      <div class="menu-drawer-header">
+        <span class="menu-drawer-title"><i class="bi bi-clock-history"></i> Menu</span>
+        <button class="btn-close-custom" onclick="closeMenu()">&times;</button>
+      </div>
+      <nav class="menu-drawer-nav">
+        <a onclick="showTab('conta'); closeMenu()"><i class="bi bi-person-circle"></i> Conta</a>
+        <a onclick="showTab('planejamento'); closeMenu()"><i class="bi bi-calendar-day"></i> Planejamento do Dia</a>
+        <a onclick="showTab('form'); closeMenu()"><i class="bi bi-plus-circle"></i> Novo Registro</a>
+        <a onclick="showTab('history'); closeMenu()"><i class="bi bi-clock-history"></i> Histórico</a>
+        <a onclick="showTab('relatorios'); closeMenu()"><i class="bi bi-bar-chart"></i> Relatórios</a>
+        <a onclick="showTab('cadastros'); closeMenu()"><i class="bi bi-gear"></i> Cadastros</a>
+        <div class="menu-drawer-divider"></div>
+        <a onclick="doLogout(); closeMenu()" class="menu-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
+      </nav>
     </div>
 
     <div class="container" style="max-width: 700px;">
 
       <!-- NAVEGACAO REMOVIDA (SUBSTITUIDA PELA TELA HOME) -->
+
+      <!-- ========== CONTA PANEL ========== -->
+      <div id="conta-panel" class="panel">
+        <div class="card-custom mb-3">
+          <div class="section-title"><i class="bi bi-person-circle"></i> Minha Conta</div>
+          <div class="conta-avatar-section">
+            <div class="conta-avatar-wrapper" onclick="document.getElementById('avatar-input').click()">
+              <img id="conta-avatar-img" src="" alt="Avatar" class="conta-avatar-img" style="display:none;">
+              <div id="conta-avatar-placeholder" class="conta-avatar-placeholder">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <div class="conta-avatar-overlay"><i class="bi bi-camera-fill"></i></div>
+            </div>
+            <input type="file" id="avatar-input" accept="image/*" style="display:none;"
+              onchange="handleAvatarUpload(this)">
+            <small class="text-muted">Clique para alterar a foto</small>
+          </div>
+        </div>
+        <div class="card-custom mb-3">
+          <div class="section-title"><i class="bi bi-pencil"></i> Dados Pessoais</div>
+          <div class="mb-3">
+            <label class="form-label">Nome de exibição</label>
+            <div class="d-flex gap-2">
+              <input type="text" id="conta-nome" class="form-control" placeholder="Seu nome">
+              <button class="btn-primary-custom" onclick="updateNome()" style="white-space:nowrap;">Salvar</button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" id="conta-email" class="form-control" readonly
+              style="background:var(--bg);cursor:not-allowed;">
+          </div>
+        </div>
+        <div class="card-custom">
+          <div class="section-title"><i class="bi bi-shield-lock"></i> Alterar Senha</div>
+          <div class="mb-3">
+            <label class="form-label">Nova senha</label>
+            <div class="password-wrapper">
+              <input type="password" id="conta-nova-senha" class="form-control" placeholder="Mínimo 6 caracteres"
+                autocomplete="new-password">
+              <button type="button" class="toggle-password" onclick="togglePassword('conta-nova-senha', this)"><i
+                  class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirmar nova senha</label>
+            <div class="password-wrapper">
+              <input type="password" id="conta-confirma-senha" class="form-control" placeholder="Repita a nova senha"
+                autocomplete="new-password">
+              <button type="button" class="toggle-password" onclick="togglePassword('conta-confirma-senha', this)"><i
+                  class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <button class="btn-primary-custom" onclick="updateSenha()">
+            <i class="bi bi-check-lg"></i> Alterar Senha
+          </button>
+        </div>
+      </div>
 
       <!-- ========== HOME PANEL ========== -->
       <div id="home-panel" class="panel">

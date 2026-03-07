@@ -21,6 +21,7 @@ var editandoPlanId = null;
 var chartDiarioInst = null;
 var chartTicketsInst = null;
 var HISTORY_PAGE_SIZE = 20;
+var planOrigemId = null;
 
 // =====================================================
 // INIT
@@ -38,7 +39,13 @@ async function checkSession() {
         showLoading(false);
 
         _supabase.auth.onAuthStateChange(function (event, session) {
-            if (event === 'SIGNED_IN' && session) {
+            if (event === 'PASSWORD_RECOVERY' && session) {
+                currentUser = session.user;
+                initApp().then(function() {
+                    showTab('conta');
+                    showToast('Defina sua nova senha abaixo.');
+                });
+            } else if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user;
                 initApp();
             } else if (event === 'SIGNED_OUT') {
@@ -58,9 +65,21 @@ async function initApp() {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-screen').style.display = '';
 
-        var { data: profile } = await _supabase.from('profiles').select('nome').eq('id', currentUser.id).single();
+        var { data: profile } = await _supabase.from('profiles').select('nome, avatar_url').eq('id', currentUser.id).single();
         var nome = profile ? profile.nome : currentUser.email;
         document.getElementById('user-name').textContent = nome;
+
+        // Header avatar
+        var headerAvatar = document.getElementById('header-avatar');
+        var headerAvatarIcon = document.getElementById('header-avatar-icon');
+        if (profile && profile.avatar_url) {
+            headerAvatar.src = profile.avatar_url;
+            headerAvatar.style.display = '';
+            if (headerAvatarIcon) headerAvatarIcon.style.display = 'none';
+        } else {
+            headerAvatar.style.display = 'none';
+            if (headerAvatarIcon) headerAvatarIcon.style.display = '';
+        }
 
         if (!appInitialized) {
             appInitialized = true;
@@ -100,7 +119,8 @@ async function initApp() {
 function showAuthTab(tab) {
     document.querySelectorAll('.auth-tabs button').forEach(function (b) { b.classList.remove('active'); });
     document.querySelectorAll('.auth-form').forEach(function (f) { f.classList.remove('active'); });
-    document.getElementById('auth-tab-' + tab).classList.add('active');
+    var tabBtn = document.getElementById('auth-tab-' + tab);
+    if (tabBtn) tabBtn.classList.add('active');
     document.getElementById('auth-form-' + tab).classList.add('active');
     document.getElementById('auth-error').style.display = 'none';
 }
@@ -145,6 +165,20 @@ function showAuthError(msg) {
     else { el.style.display = 'none'; }
 }
 
+async function doForgotPassword() {
+    var email = document.getElementById('forgot-email').value.trim();
+    if (!email) { showAuthError('Informe seu email.'); return; }
+    showLoading(true);
+    var { error } = await _supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://fabianocoutop.github.io/totalizador/'
+    });
+    showLoading(false);
+    if (error) { showAuthError(error.message); return; }
+    showAuthError('');
+    showToast('Link de recuperação enviado! Verifique seu email.');
+    showAuthTab('login');
+}
+
 // =====================================================
 // TABS
 // =====================================================
@@ -158,12 +192,114 @@ function showTab(tab) {
     if (tab === 'history') renderHistorico();
     if (tab === 'cadastros') { renderEmpresas(); renderProjetos(); }
     if (tab === 'relatorios') renderRelatorios();
+    if (tab === 'conta') loadProfile();
     if (tab === 'planejamento') {
         if (!document.getElementById('filtro-data-plan').value) {
             document.getElementById('filtro-data-plan').value = hoje();
         }
         loadPlanejamentos(document.getElementById('filtro-data-plan').value);
     }
+}
+
+// =====================================================
+// MENU DRAWER
+// =====================================================
+function toggleMenu() {
+    var drawer = document.getElementById('menu-drawer');
+    var overlay = document.getElementById('menu-overlay');
+    var isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+        closeMenu();
+    } else {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+    }
+}
+
+function closeMenu() {
+    document.getElementById('menu-drawer').classList.remove('open');
+    document.getElementById('menu-overlay').classList.remove('open');
+}
+
+// =====================================================
+// CONTA / PROFILE
+// =====================================================
+async function loadProfile() {
+    var { data: profile } = await _supabase.from('profiles').select('nome, avatar_url').eq('id', currentUser.id).single();
+    document.getElementById('conta-nome').value = profile ? profile.nome : '';
+    document.getElementById('conta-email').value = currentUser.email;
+
+    var avatarImg = document.getElementById('conta-avatar-img');
+    var avatarPlaceholder = document.getElementById('conta-avatar-placeholder');
+    if (profile && profile.avatar_url) {
+        avatarImg.src = profile.avatar_url;
+        avatarImg.style.display = '';
+        avatarPlaceholder.style.display = 'none';
+    } else {
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = '';
+    }
+}
+
+async function updateNome() {
+    var nome = document.getElementById('conta-nome').value.trim();
+    if (!nome) { showToast('O nome não pode ser vazio.', true); return; }
+    showLoading(true);
+    var { error } = await _supabase.from('profiles').update({ nome: nome }).eq('id', currentUser.id);
+    showLoading(false);
+    if (error) { showToast('Erro: ' + error.message, true); return; }
+    document.getElementById('user-name').textContent = nome;
+    showToast('Nome atualizado!');
+}
+
+async function updateSenha() {
+    var nova = document.getElementById('conta-nova-senha').value;
+    var confirma = document.getElementById('conta-confirma-senha').value;
+    if (!nova || !confirma) { showToast('Preencha ambos os campos de senha.', true); return; }
+    if (nova !== confirma) { showToast('As senhas não coincidem.', true); return; }
+    if (nova.length < 6) { showToast('A senha deve ter pelo menos 6 caracteres.', true); return; }
+    showLoading(true);
+    var { error } = await _supabase.auth.updateUser({ password: nova });
+    showLoading(false);
+    if (error) { showToast('Erro: ' + error.message, true); return; }
+    document.getElementById('conta-nova-senha').value = '';
+    document.getElementById('conta-confirma-senha').value = '';
+    showToast('Senha alterada com sucesso!');
+}
+
+async function handleAvatarUpload(input) {
+    var file = input.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showToast('Imagem muito grande (máx 2MB).', true); return; }
+
+    showLoading(true);
+    var ext = file.name.split('.').pop();
+    var filePath = currentUser.id + '/avatar.' + ext;
+
+    // Upload (upsert)
+    var { error: upErr } = await _supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+    if (upErr) { showLoading(false); showToast('Erro no upload: ' + upErr.message, true); return; }
+
+    // Get public URL
+    var { data: urlData } = _supabase.storage.from('avatars').getPublicUrl(filePath);
+    var publicUrl = urlData.publicUrl + '?t=' + Date.now();
+
+    // Save to profile
+    var { error: dbErr } = await _supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
+    showLoading(false);
+    if (dbErr) { showToast('Erro ao salvar: ' + dbErr.message, true); return; }
+
+    // Update UI
+    document.getElementById('conta-avatar-img').src = publicUrl;
+    document.getElementById('conta-avatar-img').style.display = '';
+    document.getElementById('conta-avatar-placeholder').style.display = 'none';
+    var headerAvatar = document.getElementById('header-avatar');
+    var headerAvatarIcon = document.getElementById('header-avatar-icon');
+    headerAvatar.src = publicUrl;
+    headerAvatar.style.display = '';
+    if (headerAvatarIcon) headerAvatarIcon.style.display = 'none';
+    showToast('Foto atualizada!');
+    input.value = '';
 }
 
 // =====================================================
@@ -397,6 +533,18 @@ async function salvarRegistro() {
         if (error) { showToast('Erro: ' + error.message, true); return; }
         showToast('Registro salvo!');
     }
+
+    // Se veio de um planejamento, marcar como registrado e voltar para agenda
+    if (planOrigemId !== null) {
+        await _supabase.from('planejamentos').update({ registro_criado: true }).eq('id', planOrigemId);
+        var planOrigemIdTemp = planOrigemId;
+        planOrigemId = null;
+        resetFormulario();
+        showToast('Registro criado! Voltando à agenda...');
+        setTimeout(function() { showTab('planejamento'); }, 600);
+        return;
+    }
+
     resetFormulario();
 }
 
@@ -906,12 +1054,16 @@ function renderTimeline(list) {
         var title = escapeHtml(plan.titulo);
         var timeStr = plan.hora_inicio.substring(0, 5) + ' — ' + plan.hora_fim.substring(0, 5);
 
+        var registradoBadge = plan.registro_criado ? '<div class="plan-registered-badge"><i class="bi bi-check-circle-fill"></i> Registrado</div>' : '';
+
         eventDiv.innerHTML =
             '<div class="plan-event-title" title="' + title + '">' + title + '</div>' +
             '<div class="plan-event-time">' + timeStr + '</div>' +
+            registradoBadge +
             '<div class="plan-event-actions">' +
-            '<button onclick="event.stopPropagation(); editarPlanejamento(' + plan.id + ')"><i class="bi bi-pencil"></i></button>' +
-            '<button onclick="event.stopPropagation(); apagarPlanejamento(' + plan.id + ')"><i class="bi bi-trash"></i></button>' +
+            '<button onclick="event.stopPropagation(); editarPlanejamento(' + plan.id + ')" title="Editar"><i class="bi bi-pencil"></i></button>' +
+            '<button onclick="event.stopPropagation(); duplicarPlanejamento(' + plan.id + ')" title="Duplicar"><i class="bi bi-copy"></i></button>' +
+            '<button onclick="event.stopPropagation(); apagarPlanejamento(' + plan.id + ')" title="Excluir"><i class="bi bi-trash"></i></button>' +
             '<button onclick="event.stopPropagation(); transformarEmRegistro(' + plan.id + ')" title="Gerar Apontamento"><i class="bi bi-clock-history"></i></button>' +
             '<button onclick="event.stopPropagation(); syncPlanToCalendar(' + plan.id + ')" title="No Google Calendar"><i class="bi bi-calendar-check"></i></button>' +
             '</div>';
@@ -1054,19 +1206,43 @@ function transformarEmRegistro(planId) {
     var p = planList.find(function (x) { return x.id === planId; });
     if (!p) return;
 
-    // Abre a tab de Novo Registro preenchendo as refer\u00eancias
+    // Guardar o ID do planejamento de origem para o fluxo de retorno
+    planOrigemId = planId;
+
+    // Abre a tab de Novo Registro preenchendo as referências
     showTab('form');
     resetFormulario();
     document.getElementById('campo-data').value = p.data;
-    document.getElementById('campo-descricao').value = '- Planejamento: ' + p.titulo + '\n' + (p.descricao || '');
 
-    // Configura o intervalo igual ao hor\u00e1rio planejado
+    // Limpa a tag [cor:...] da descrição
+    var descLimpa = (p.descricao || '').replace(/\[cor:[^\]]+\]/g, '').trim();
+    document.getElementById('campo-descricao').value = '- Planejamento: ' + p.titulo + (descLimpa ? '\n' + descLimpa : '');
+
+    // Configura o intervalo igual ao horário planejado
     document.getElementById('intervalos').innerHTML = '';
     idContador = 0;
     adicionarIntervalo(p.hora_inicio.substring(0, 5), p.hora_fim.substring(0, 5));
 
-    showToast('Registo pr\u00e9-preenchido. Vincule um Projeto/Ticket e Salve!');
+    showToast('Registro pré-preenchido. Vincule um Projeto/Ticket e Salve!');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function duplicarPlanejamento(planId) {
+    var p = planList.find(function (x) { return x.id === planId; });
+    if (!p) return;
+    showLoading(true);
+    var { error } = await _supabase.from('planejamentos').insert({
+        user_id: currentUser.id,
+        titulo: p.titulo + ' (cópia)',
+        data: p.data,
+        hora_inicio: p.hora_inicio,
+        hora_fim: p.hora_fim,
+        descricao: p.descricao
+    });
+    showLoading(false);
+    if (error) { showToast('Erro ao duplicar: ' + error.message, true); return; }
+    showToast('Evento duplicado!');
+    loadPlanejamentos(document.getElementById('filtro-data-plan').value);
 }
 
 function syncPlanToCalendar(planId) {

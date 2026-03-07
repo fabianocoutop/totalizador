@@ -1100,3 +1100,212 @@ textarea.form-control {
     width: 100%;
   }
 }
+
+/* ========== DRAWER MENU ========== */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.menu-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: var(--surface);
+  z-index: 1200;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+}
+
+.menu-drawer.open {
+  transform: translateX(0);
+}
+
+.menu-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: #fff;
+}
+
+.menu-drawer-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-drawer-header .btn-close-custom {
+  color: rgba(255,255,255,0.8);
+  font-size: 1.6rem;
+}
+
+.menu-drawer-header .btn-close-custom:hover {
+  color: #fff;
+}
+
+.menu-drawer-nav {
+  flex: 1;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+
+.menu-drawer-nav a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 24px;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.menu-drawer-nav a:hover {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.menu-drawer-nav a i {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.menu-drawer-nav a:hover i {
+  color: var(--primary);
+}
+
+.menu-drawer-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 24px;
+}
+
+.menu-drawer-nav .menu-logout {
+  color: var(--danger);
+}
+
+.menu-drawer-nav .menu-logout i {
+  color: var(--danger);
+}
+
+/* ========== HEADER AVATAR ========== */
+.header-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.5);
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* ========== CONTA / PROFILE ========== */
+.conta-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 0;
+}
+
+.conta-avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.2);
+}
+
+.conta-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.conta-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 2.5rem;
+}
+
+.conta-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.4rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.conta-avatar-wrapper:hover .conta-avatar-overlay {
+  opacity: 1;
+}
+
+/* ========== FORGOT PASSWORD ========== */
+.forgot-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+/* ========== PLAN EVENT REGISTERED BADGE ========== */
+.plan-registered-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.3);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
